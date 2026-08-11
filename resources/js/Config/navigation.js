@@ -19,8 +19,10 @@ export const adminNavigation = [
     },
     {
         label: 'Counsellors',
+        routeName: 'admin.counsellors.index',
+        active: 'admin.counsellors.*',
         icon: Stethoscope,
-        disabled: true,
+        permission: 'counsellors.view',
     },
     {
         label: 'Appointments',

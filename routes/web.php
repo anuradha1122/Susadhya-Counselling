@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CounsellorController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\UserController;
@@ -33,6 +34,17 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::resource('roles', RoleController::class)
                 ->except('show');
+
+            Route::resource(
+                'counsellors',
+                CounsellorController::class
+            );
+
+            Route::patch(
+                'counsellors/{counsellor}/restore',
+                [CounsellorController::class, 'restore']
+            )->name('counsellors.restore');
+
         });
 
     Route::prefix('counsellor')
