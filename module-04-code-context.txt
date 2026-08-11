@@ -1,0 +1,1357 @@
+===== MATCHING FILES =====
+app/Providers/AppServiceProvider.php:9:use Illuminate\Support\ServiceProvider;
+app/Providers/AppServiceProvider.php:12:class AppServiceProvider extends ServiceProvider
+app/Http/Middleware/EnsureAccountIsActive.php:25:            $request->session()->invalidate();
+app/Http/Middleware/EnsureAccountIsActive.php:26:            $request->session()->regenerateToken();
+app/Http/Middleware/HandleInertiaRequests.php:61:                    ->session()
+app/Http/Middleware/HandleInertiaRequests.php:65:                    ->session()
+app/Http/Controllers/Auth/EmailVerificationPromptController.php:20:                    : Inertia::render('Auth/VerifyEmail', ['status' => session('status')]);
+app/Http/Controllers/Auth/PasswordResetLinkController.php:21:            'status' => session('status'),
+app/Http/Controllers/Auth/AuthenticatedSessionController.php:14:class AuthenticatedSessionController extends Controller
+app/Http/Controllers/Auth/AuthenticatedSessionController.php:23:            'status' => session('status'),
+app/Http/Controllers/Auth/AuthenticatedSessionController.php:34:        $request->session()->regenerate();
+app/Http/Controllers/Auth/AuthenticatedSessionController.php:40:     * Destroy an authenticated session.
+app/Http/Controllers/Auth/AuthenticatedSessionController.php:46:        $request->session()->invalidate();
+app/Http/Controllers/Auth/AuthenticatedSessionController.php:48:        $request->session()->regenerateToken();
+app/Http/Controllers/Auth/ConfirmablePasswordController.php:37:        $request->session()->put('auth.password_confirmed_at', time());
+app/Http/Controllers/ProfileController.php:23:            'status' => session('status'),
+app/Http/Controllers/ProfileController.php:58:        $request->session()->invalidate();
+app/Http/Controllers/ProfileController.php:59:        $request->session()->regenerateToken();
+Binary file database/database.sqlite matches
+database/migrations/0001_01_01_000000_create_users_table.php:30:        Schema::create('sessions', function (Blueprint $table) {
+database/migrations/0001_01_01_000000_create_users_table.php:47:        Schema::dropIfExists('sessions');
+database/seeders/RolePermissionSeeder.php:38:            'services.view',
+database/seeders/RolePermissionSeeder.php:39:            'services.create',
+database/seeders/RolePermissionSeeder.php:40:            'services.update',
+database/seeders/RolePermissionSeeder.php:41:            'services.archive',
+database/seeders/RolePermissionSeeder.php:98:            'services.view',
+database/seeders/RolePermissionSeeder.php:99:            'services.create',
+database/seeders/RolePermissionSeeder.php:100:            'services.update',
+database/seeders/RolePermissionSeeder.php:101:            'services.archive',
+routes/auth.php:3:use App\Http\Controllers\Auth\AuthenticatedSessionController;
+routes/auth.php:15:    Route::get('login', [AuthenticatedSessionController::class, 'create'])
+routes/auth.php:18:    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+routes/auth.php:52:    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
+tests/Feature/ProfileTest.php:36:            ->assertSessionHasNoErrors()
+tests/Feature/ProfileTest.php:58:            ->assertSessionHasNoErrors()
+tests/Feature/ProfileTest.php:75:            ->assertSessionHasNoErrors()
+tests/Feature/ProfileTest.php:94:            ->assertSessionHasErrors('password')
+tests/Feature/Auth/PasswordConfirmationTest.php:31:        $response->assertSessionHasNoErrors();
+tests/Feature/Auth/PasswordConfirmationTest.php:42:        $response->assertSessionHasErrors();
+tests/Feature/Auth/PasswordUpdateTest.php:28:            ->assertSessionHasNoErrors()
+tests/Feature/Auth/PasswordUpdateTest.php:48:            ->assertSessionHasErrors('current_password')
+tests/Feature/Auth/PasswordResetTest.php:67:                ->assertSessionHasNoErrors()
+tests/Feature/Admin/CounsellorManagementTest.php:368:        ->assertSessionHasErrors([
+tests/Feature/Admin/CounsellorManagementTest.php:411:        ->assertSessionHasErrors([
+tests/Feature/Admin/UserManagementTest.php:54:    ])->assertSessionHasErrors('role');
+tests/Feature/Admin/UserManagementTest.php:67:    ])->assertSessionHasErrors('role');
+tests/Feature/Admin/UserManagementTest.php:89:    ])->assertSessionHasErrors('is_active');
+tests/Feature/Admin/UserManagementTest.php:100:    ])->assertSessionHasErrors('role');
+tests/Feature/DashboardAccessTest.php:99:        ->assertSessionHasErrors('email');
+tests/Feature/RolePermissionSeederTest.php:40:        'services.view',
+tests/Feature/RolePermissionSeederTest.php:41:        'services.create',
+tests/Feature/RolePermissionSeederTest.php:42:        'services.update',
+tests/Feature/RolePermissionSeederTest.php:43:        'services.archive',
+===== ROUTES =====
+<?php
+
+use App\Http\Controllers\Admin\CounsellorController;
+use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Counsellor\DashboardController as CounsellorDashboardController;
+use App\Http\Controllers\DashboardRedirectController;
+use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
+
+Route::get('/', function () {
+    return inertia('Welcome');
+})->name('home');
+
+Route::middleware(['auth', 'active'])->group(function () {
+    Route::get('/dashboard', DashboardRedirectController::class)
+        ->name('dashboard');
+
+    Route::prefix('admin')
+        ->name('admin.')
+        ->middleware('permission:dashboard.admin.view')
+        ->group(function () {
+            Route::get('/dashboard', AdminDashboardController::class)
+                ->name('dashboard');
+
+            Route::resource('users', UserController::class)
+                ->except('show');
+
+            Route::patch('/users/{user}/status', [
+                UserController::class,
+                'updateStatus',
+            ])->name('users.status');
+
+            Route::resource('roles', RoleController::class)
+                ->except('show');
+
+            Route::resource(
+                'counsellors',
+                CounsellorController::class
+            );
+
+            Route::patch(
+                'counsellors/{counsellor}/restore',
+                [CounsellorController::class, 'restore']
+            )->name('counsellors.restore');
+
+        });
+
+    Route::prefix('counsellor')
+        ->name('counsellor.')
+        ->middleware('role:counsellor')
+        ->group(function () {
+            Route::get(
+                '/dashboard',
+                CounsellorDashboardController::class
+            )->name('dashboard');
+        });
+
+    Route::get('/profile', [
+        ProfileController::class,
+        'edit',
+    ])->name('profile.edit');
+
+    Route::patch('/profile', [
+        ProfileController::class,
+        'update',
+    ])->name('profile.update');
+
+    Route::delete('/profile', [
+        ProfileController::class,
+        'destroy',
+    ])->name('profile.destroy');
+});
+
+require __DIR__.'/auth.php';
+===== PERMISSIONS =====
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
+
+class RolePermissionSeeder extends Seeder
+{
+    public function run(): void
+    {
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        $permissions = [
+            'dashboard.admin.view',
+            'dashboard.counsellor.view',
+
+            'users.view',
+            'users.create',
+            'users.update',
+            'users.delete',
+
+            'roles.view',
+            'roles.manage',
+
+            'settings.view',
+            'settings.update',
+
+            'audit-logs.view',
+
+            'counsellors.view',
+            'counsellors.create',
+            'counsellors.update',
+            'counsellors.archive',
+
+            'services.view',
+            'services.create',
+            'services.update',
+            'services.archive',
+
+            'appointments.view-all',
+            'appointments.view-own',
+            'appointments.manage',
+            'appointments.update-own',
+
+            'availability.view-own',
+            'availability.manage-own',
+
+            'payments.view-all',
+            'payments.view-own',
+
+            'reports.view',
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate([
+                'name' => $permission,
+                'guard_name' => 'web',
+            ]);
+        }
+
+        $superAdmin = Role::firstOrCreate([
+            'name' => 'super_admin',
+            'guard_name' => 'web',
+        ]);
+
+        $admin = Role::firstOrCreate([
+            'name' => 'admin',
+            'guard_name' => 'web',
+        ]);
+
+        $counsellor = Role::firstOrCreate([
+            'name' => 'counsellor',
+            'guard_name' => 'web',
+        ]);
+
+        $superAdmin->syncPermissions(Permission::all());
+
+        $admin->syncPermissions([
+            'dashboard.admin.view',
+
+            'users.view',
+            'users.create',
+            'users.update',
+
+            'settings.view',
+            'settings.update',
+
+            'audit-logs.view',
+
+            'counsellors.view',
+            'counsellors.create',
+            'counsellors.update',
+            'counsellors.archive',
+
+            'services.view',
+            'services.create',
+            'services.update',
+            'services.archive',
+
+            'appointments.view-all',
+            'appointments.manage',
+
+            'payments.view-all',
+            'reports.view',
+        ]);
+
+        $counsellor->syncPermissions([
+            'dashboard.counsellor.view',
+            'appointments.view-own',
+            'appointments.update-own',
+            'availability.view-own',
+            'availability.manage-own',
+            'payments.view-own',
+        ]);
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+}
+===== DATABASE SEEDER =====
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+
+class DatabaseSeeder extends Seeder
+{
+    public function run(): void
+    {
+        $this->call([
+            RolePermissionSeeder::class,
+            SuperAdminSeeder::class,
+            CounsellorReferenceSeeder::class,
+        ]);
+    }
+}
+===== NAVIGATION =====
+import {
+    CalendarDays,
+    CircleDollarSign,
+    Clock3,
+    FileClock,
+    KeyRound,
+    LayoutDashboard,
+    Settings,
+    Stethoscope,
+    Users,
+} from 'lucide-react';
+
+export const adminNavigation = [
+    {
+        label: 'Dashboard',
+        routeName: 'admin.dashboard',
+        icon: LayoutDashboard,
+        permission: 'dashboard.admin.view',
+    },
+    {
+        label: 'Counsellors',
+        routeName: 'admin.counsellors.index',
+        active: 'admin.counsellors.*',
+        icon: Stethoscope,
+        permission: 'counsellors.view',
+    },
+    {
+        label: 'Appointments',
+        icon: CalendarDays,
+        disabled: true,
+    },
+    {
+        label: 'Payments',
+        icon: CircleDollarSign,
+        disabled: true,
+    },
+    {
+        label: 'Users',
+        routeName: 'admin.users.index',
+        icon: Users,
+        permission: 'users.view',
+    },
+    {
+        label: 'Roles & Permissions',
+        routeName: 'admin.roles.index',
+        icon: KeyRound,
+        permission: 'roles.view',
+    },
+    {
+        label: 'Audit Logs',
+        icon: FileClock,
+        disabled: true,
+    },
+    {
+        label: 'Settings',
+        icon: Settings,
+        disabled: true,
+    },
+];
+
+export const counsellorNavigation = [
+    {
+        label: 'Dashboard',
+        routeName: 'counsellor.dashboard',
+        icon: LayoutDashboard,
+        permission: 'dashboard.counsellor.view',
+    },
+    {
+        label: 'My Appointments',
+        icon: CalendarDays,
+        disabled: true,
+    },
+    {
+        label: 'My Availability',
+        icon: Clock3,
+        disabled: true,
+    },
+];
+===== COUNSELLOR CONTROLLER =====
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreCounsellorRequest;
+use App\Http\Requests\Admin\UpdateCounsellorRequest;
+use App\Models\CounsellorProfile;
+use App\Models\Language;
+use App\Models\Specialization;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class CounsellorController extends Controller
+{
+    public function index(Request $request): Response
+    {
+        $this->authorize('viewAny', CounsellorProfile::class);
+
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:100'],
+            'status' => [
+                'nullable',
+                'in:active,inactive,archived',
+            ],
+            'specialization_id' => [
+                'nullable',
+                'integer',
+                'exists:specializations,id',
+            ],
+        ]);
+
+        $counsellors = CounsellorProfile::query()
+            ->with([
+                'user:id,name,email',
+                'specializations:id,name',
+                'languages:id,name,code',
+            ])
+            ->when(
+                $filters['search'] ?? null,
+                function ($query, string $search): void {
+                    $query->where(function ($query) use ($search): void {
+                        $query
+                            ->where(
+                                'registration_number',
+                                'like',
+                                "%{$search}%"
+                            )
+                            ->orWhere(
+                                'professional_title',
+                                'like',
+                                "%{$search}%"
+                            )
+                            ->orWhere('nic', 'like', "%{$search}%")
+                            ->orWhere('city', 'like', "%{$search}%")
+                            ->orWhereHas(
+                                'user',
+                                function ($query) use ($search): void {
+                                    $query
+                                        ->where(
+                                            'name',
+                                            'like',
+                                            "%{$search}%"
+                                        )
+                                        ->orWhere(
+                                            'email',
+                                            'like',
+                                            "%{$search}%"
+                                        );
+                                }
+                            );
+                    });
+                }
+            )
+            ->when(
+                $filters['status'] ?? null,
+                fn ($query, string $status) => $query->where(
+                    'status',
+                    $status
+                )
+            )
+            ->when(
+                $filters['specialization_id'] ?? null,
+                fn ($query, int|string $specializationId) => $query
+                    ->whereHas(
+                        'specializations',
+                        fn ($query) => $query->whereKey(
+                            $specializationId
+                        )
+                    )
+            )
+            ->latest()
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (CounsellorProfile $counsellor) => [
+                'id' => $counsellor->id,
+                'registration_number' => $counsellor->registration_number,
+                'professional_title' => $counsellor->professional_title,
+                'years_of_experience' => $counsellor->years_of_experience,
+                'city' => $counsellor->city,
+                'status' => $counsellor->status,
+                'user' => $counsellor->user,
+                'specializations' => $counsellor->specializations,
+                'languages' => $counsellor->languages,
+            ]);
+
+        return Inertia::render('Admin/Counsellors/Index', [
+            'counsellors' => $counsellors,
+            'filters' => [
+                'search' => $filters['search'] ?? '',
+                'status' => $filters['status'] ?? '',
+                'specialization_id' => isset(
+                    $filters['specialization_id']
+                )
+                    ? (string) $filters['specialization_id']
+                    : '',
+            ],
+            'specializations' => Specialization::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name']),
+            'permissions' => [
+                'create' => $request->user()
+                    ->can('counsellors.create'),
+                'update' => $request->user()
+                    ->can('counsellors.update'),
+                'archive' => $request->user()
+                    ->can('counsellors.archive'),
+            ],
+        ]);
+    }
+
+    public function create(): Response
+    {
+        $this->authorize('create', CounsellorProfile::class);
+
+        return Inertia::render(
+            'Admin/Counsellors/Create',
+            $this->formOptions()
+        );
+    }
+
+    public function store(
+        StoreCounsellorRequest $request
+    ): RedirectResponse {
+        $validated = $request->validated();
+
+        $counsellor = DB::transaction(
+            function () use ($validated): CounsellorProfile {
+                $counsellor = CounsellorProfile::create(
+                    $this->profileData($validated)
+                );
+
+                $this->saveRelationships(
+                    $counsellor,
+                    $validated
+                );
+
+                if (! $counsellor->user->hasRole('counsellor')) {
+                    $counsellor->user->assignRole('counsellor');
+                }
+
+                if ($counsellor->status === 'inactive') {
+                    $counsellor->user->update([
+                        'is_active' => false,
+                    ]);
+                }
+
+                return $counsellor;
+            }
+        );
+
+        return to_route(
+            'admin.counsellors.show',
+            $counsellor
+        )->with('success', 'Counsellor profile created successfully.');
+    }
+
+    public function show(
+        CounsellorProfile $counsellor
+    ): Response {
+        $this->authorize('view', $counsellor);
+
+        $counsellor->load([
+            'user:id,name,email,is_active',
+            'specializations:id,name',
+            'languages:id,name,code',
+            'qualifications',
+            'archivedBy:id,name',
+        ]);
+
+        return Inertia::render('Admin/Counsellors/Show', [
+            'counsellor' => $counsellor,
+            'permissions' => [
+                'update' => request()->user()
+                    ->can('update', $counsellor),
+                'archive' => request()->user()
+                    ->can('delete', $counsellor),
+                'restore' => request()->user()
+                    ->can('restore', $counsellor),
+            ],
+        ]);
+    }
+
+    public function edit(CounsellorProfile $counsellor): Response
+    {
+        Gate::authorize('update', $counsellor);
+
+        $counsellor->load([
+            'user:id,name,email,is_active',
+            'specializations:id,name',
+            'languages:id,name,code',
+            'qualifications',
+        ]);
+
+        return Inertia::render('Admin/Counsellors/Edit', [
+            'counsellor' => $counsellor,
+            ...$this->formOptions($counsellor),
+        ]);
+    }
+
+    public function update(
+        UpdateCounsellorRequest $request,
+        CounsellorProfile $counsellor
+    ): RedirectResponse {
+        $validated = $request->validated();
+
+        DB::transaction(function () use (
+            $counsellor,
+            $validated
+        ): void {
+            $counsellor->update(
+                $this->profileData($validated)
+            );
+
+            $this->saveRelationships(
+                $counsellor,
+                $validated
+            );
+
+            if (! $counsellor->user->hasRole('counsellor')) {
+                $counsellor->user->assignRole('counsellor');
+            }
+
+            $counsellor->user->update([
+                'is_active' => $counsellor->status === 'active',
+            ]);
+        });
+
+        return to_route(
+            'admin.counsellors.show',
+            $counsellor
+        )->with('success', 'Counsellor profile updated successfully.');
+    }
+
+    public function destroy(
+        CounsellorProfile $counsellor
+    ): RedirectResponse {
+        $this->authorize('delete', $counsellor);
+
+        DB::transaction(function () use ($counsellor): void {
+            $counsellor->update([
+                'status' => 'archived',
+                'archived_at' => now(),
+                'archived_by' => request()->user()->id,
+            ]);
+
+            $counsellor->user->update([
+                'is_active' => false,
+            ]);
+        });
+
+        return to_route('admin.counsellors.index')
+            ->with('success', 'Counsellor archived successfully.');
+    }
+
+    public function restore(
+        CounsellorProfile $counsellor
+    ): RedirectResponse {
+        $this->authorize('restore', $counsellor);
+
+        DB::transaction(function () use ($counsellor): void {
+            $counsellor->update([
+                'status' => 'active',
+                'archived_at' => null,
+                'archived_by' => null,
+            ]);
+
+            $counsellor->user->update([
+                'is_active' => true,
+            ]);
+        });
+
+        return to_route(
+            'admin.counsellors.show',
+            $counsellor
+        )->with('success', 'Counsellor restored successfully.');
+    }
+
+    private function formOptions(
+        ?CounsellorProfile $currentCounsellor = null
+    ): array {
+        return [
+            'users' => User::query()
+                ->where(function ($query) use ($currentCounsellor): void {
+                    $query->where('is_active', true);
+
+                    if ($currentCounsellor) {
+                        $query->orWhere(
+                            'id',
+                            $currentCounsellor->user_id,
+                        );
+                    }
+                })
+                ->where(function ($query) use ($currentCounsellor): void {
+                    $query->whereDoesntHave('counsellorProfile');
+
+                    if ($currentCounsellor) {
+                        $query->orWhere(
+                            'id',
+                            $currentCounsellor->user_id,
+                        );
+                    }
+                })
+                ->orderBy('name')
+                ->get(['id', 'name', 'email']),
+            'specializations' => Specialization::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name']),
+            'languages' => Language::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'code']),
+        ];
+    }
+
+    private function profileData(array $validated): array
+    {
+        return collect($validated)
+            ->only([
+                'user_id',
+                'registration_number',
+                'professional_title',
+                'nic',
+                'date_of_birth',
+                'gender',
+                'years_of_experience',
+                'biography',
+                'address',
+                'city',
+                'status',
+            ])
+            ->all();
+    }
+
+    private function saveRelationships(
+        CounsellorProfile $counsellor,
+        array $validated
+    ): void {
+        $counsellor->specializations()->sync(
+            $validated['specialization_ids'] ?? []
+        );
+
+        $languageSync = collect(
+            $validated['languages'] ?? []
+        )->mapWithKeys(
+            fn (array $language) => [
+                $language['language_id'] => [
+                    'proficiency' => $language['proficiency'],
+                ],
+            ]
+        )->all();
+
+        $counsellor->languages()->sync($languageSync);
+===== COUNSELLOR POLICY =====
+<?php
+
+namespace App\Policies;
+
+use App\Models\CounsellorProfile;
+use App\Models\User;
+
+class CounsellorProfilePolicy
+{
+    public function viewAny(User $user): bool
+    {
+        return $user->can('counsellors.view');
+    }
+
+    public function view(
+        User $user,
+        CounsellorProfile $counsellor
+    ): bool {
+        return $user->can('counsellors.view');
+    }
+
+    public function create(User $user): bool
+    {
+        return $user->can('counsellors.create');
+    }
+
+    public function update(
+        User $user,
+        CounsellorProfile $counsellor
+    ): bool {
+        return ! $counsellor->isArchived()
+            && $user->can('counsellors.update');
+    }
+
+    public function delete(
+        User $user,
+        CounsellorProfile $counsellor
+    ): bool {
+        return ! $counsellor->isArchived()
+            && $user->can('counsellors.archive');
+    }
+
+    public function restore(
+        User $user,
+        CounsellorProfile $counsellor
+    ): bool {
+        return $counsellor->isArchived()
+            && $user->can('counsellors.update');
+    }
+
+    public function forceDelete(
+        User $user,
+        CounsellorProfile $counsellor
+    ): bool {
+        return false;
+    }
+}
+===== COUNSELLOR TEST HELPERS =====
+<?php
+
+use App\Models\CounsellorProfile;
+use App\Models\Language;
+use App\Models\Specialization;
+use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function (): void {
+    $this->seed(RolePermissionSeeder::class);
+});
+
+function adminWithPermissions(array $permissions): User
+{
+    $user = User::factory()->create([
+        'is_active' => true,
+        'email_verified_at' => now(),
+    ]);
+
+    $user->givePermissionTo([
+        'dashboard.admin.view',
+        ...$permissions,
+    ]);
+
+    return $user;
+}
+
+function counsellorPayload(
+    User $user,
+    array $overrides = []
+): array {
+    return array_replace_recursive([
+        'user_id' => $user->id,
+        'registration_number' => 'COUN-00001',
+        'professional_title' => 'Senior Counsellor',
+        'nic' => '199012345678',
+        'date_of_birth' => '1990-01-15',
+        'gender' => 'female',
+        'years_of_experience' => 8,
+        'biography' => 'Experienced professional counsellor.',
+        'address' => '10 Main Street',
+        'city' => 'Kandy',
+        'status' => 'active',
+        'specialization_ids' => [],
+        'languages' => [],
+        'qualifications' => [],
+    ], $overrides);
+}
+
+test('guests are redirected from counsellor management', function () {
+    $this->get(route('admin.counsellors.index'))
+        ->assertRedirect();
+
+    $this->get(route('admin.counsellors.create'))
+        ->assertRedirect();
+});
+
+test('users without permission cannot view counsellors', function () {
+    $user = User::factory()->create([
+        'is_active' => true,
+        'email_verified_at' => now(),
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('admin.counsellors.index'))
+        ->assertForbidden();
+});
+
+test('authorized administrators can view the counsellor list', function () {
+    $admin = adminWithPermissions(['counsellors.view']);
+
+    $counsellor = CounsellorProfile::factory()->create();
+
+    $this->actingAs($admin)
+        ->get(route('admin.counsellors.index'))
+        ->assertOk()
+        ->assertInertia(
+            fn (Assert $page) => $page
+                ->component('Admin/Counsellors/Index')
+                ->has('counsellors.data', 1)
+                ->where(
+                    'counsellors.data.0.id',
+                    $counsellor->id
+                )
+                ->has('filters')
+                ->has('specializations')
+                ->has('permissions')
+        );
+});
+
+test('the counsellor list can be searched by user name', function () {
+    $admin = adminWithPermissions(['counsellors.view']);
+
+    $matchingUser = User::factory()->create([
+        'name' => 'Nimali Perera',
+    ]);
+
+    $otherUser = User::factory()->create([
+        'name' => 'Kasun Silva',
+    ]);
+
+    $matching = CounsellorProfile::factory()->create([
+        'user_id' => $matchingUser->id,
+    ]);
+
+    CounsellorProfile::factory()->create([
+        'user_id' => $otherUser->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.counsellors.index', [
+            'search' => 'Nimali',
+        ]))
+        ->assertOk()
+        ->assertInertia(
+            fn (Assert $page) => $page
+                ->has('counsellors.data', 1)
+                ->where(
+                    'counsellors.data.0.id',
+                    $matching->id
+                )
+                ->where('filters.search', 'Nimali')
+        );
+});
+
+test('the counsellor list can be filtered by status', function () {
+    $admin = adminWithPermissions(['counsellors.view']);
+
+    CounsellorProfile::factory()->create([
+        'status' => 'active',
+    ]);
+
+    $inactive = CounsellorProfile::factory()->create([
+        'status' => 'inactive',
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.counsellors.index', [
+            'status' => 'inactive',
+        ]))
+        ->assertOk()
+        ->assertInertia(
+            fn (Assert $page) => $page
+                ->has('counsellors.data', 1)
+                ->where(
+                    'counsellors.data.0.id',
+                    $inactive->id
+                )
+                ->where('filters.status', 'inactive')
+        );
+});
+
+test('the counsellor list can be filtered by specialization', function () {
+    $admin = adminWithPermissions(['counsellors.view']);
+
+    $trauma = Specialization::query()->create([
+        'name' => 'Trauma Counselling',
+        'slug' => 'trauma-counselling',
+        'is_active' => true,
+    ]);
+
+    $career = Specialization::query()->create([
+        'name' => 'Career Counselling',
+        'slug' => 'career-counselling',
+        'is_active' => true,
+    ]);
+
+    $matching = CounsellorProfile::factory()->create();
+    $matching->specializations()->attach($trauma);
+
+    $other = CounsellorProfile::factory()->create();
+    $other->specializations()->attach($career);
+
+    $this->actingAs($admin)
+        ->get(route('admin.counsellors.index', [
+            'specialization_id' => $trauma->id,
+===== COUNSELLOR INDEX =====
+import AdminLayout from '@/Layouts/AdminLayout';
+import {
+    Head,
+    Link,
+    router,
+    usePage,
+} from '@inertiajs/react';
+import {
+    Eye,
+    Pencil,
+    Plus,
+    Search,
+} from 'lucide-react';
+import { useState } from 'react';
+
+const statusClasses = {
+    active: 'bg-emerald-100 text-emerald-700',
+    inactive: 'bg-amber-100 text-amber-700',
+    archived: 'bg-slate-200 text-slate-700',
+};
+
+export default function Index({
+    counsellors,
+    filters,
+    specializations,
+    permissions,
+}) {
+    const { flash = {} } = usePage().props;
+
+    const [search, setSearch] = useState(filters.search ?? '');
+    const [status, setStatus] = useState(filters.status ?? '');
+    const [specializationId, setSpecializationId] = useState(
+        filters.specialization_id ?? '',
+    );
+
+    const applyFilters = (event) => {
+        event.preventDefault();
+
+        router.get(
+            route('admin.counsellors.index'),
+            {
+                search,
+                status,
+                specialization_id: specializationId,
+            },
+            {
+                preserveState: true,
+                replace: true,
+            },
+        );
+    };
+
+    const clearFilters = () => {
+        setSearch('');
+        setStatus('');
+        setSpecializationId('');
+
+        router.get(route('admin.counsellors.index'));
+    };
+
+    return (
+        <AdminLayout title="Counsellors">
+            <Head title="Counsellors" />
+
+            <div className="space-y-6">
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-900">
+                            Counsellors
+                        </h1>
+
+                        <p className="mt-1 text-sm text-slate-500">
+                            Manage counsellor profiles, qualifications,
+                            specializations and languages.
+                        </p>
+                    </div>
+
+                    {permissions.create && (
+                        <Link
+                            href={route(
+                                'admin.counsellors.create',
+                            )}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Add counsellor
+                        </Link>
+                    )}
+                </div>
+
+                {flash.success && (
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                        {flash.success}
+                    </div>
+                )}
+
+                <form
+                    onSubmit={applyFilters}
+                    className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:grid-cols-4"
+                >
+                    <div className="relative md:col-span-2">
+                        <Search className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+
+                        <input
+                            type="search"
+                            value={search}
+                            onChange={(event) =>
+                                setSearch(event.target.value)
+                            }
+                            placeholder="Search name, email, NIC or registration number"
+                            className="w-full rounded-xl border-slate-300 pl-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        />
+                    </div>
+
+                    <select
+                        value={status}
+                        onChange={(event) =>
+                            setStatus(event.target.value)
+                        }
+                        className="rounded-xl border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    >
+                        <option value="">All statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="archived">Archived</option>
+                    </select>
+
+                    <select
+                        value={specializationId}
+                        onChange={(event) =>
+                            setSpecializationId(
+                                event.target.value,
+                            )
+                        }
+                        className="rounded-xl border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    >
+                        <option value="">
+                            All specializations
+                        </option>
+
+                        {specializations.map((specialization) => (
+                            <option
+                                key={specialization.id}
+                                value={specialization.id}
+                            >
+                                {specialization.name}
+                            </option>
+                        ))}
+                    </select>
+
+                    <div className="flex gap-3 md:col-span-4 md:justify-end">
+                        <button
+                            type="button"
+                            onClick={clearFilters}
+                            className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        >
+                            Clear
+                        </button>
+
+                        <button
+                            type="submit"
+                            className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                        >
+                            Apply filters
+                        </button>
+                    </div>
+                </form>
+
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-slate-200">
+                            <thead className="bg-slate-50">
+                                <tr>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                        Counsellor
+                                    </th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                        Registration
+                                    </th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                        Specializations
+                                    </th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                        Experience
+                                    </th>
+                                    <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                        Status
+                                    </th>
+                                    <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                        Actions
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody className="divide-y divide-slate-100">
+                                {counsellors.data.map(
+                                    (counsellor) => (
+                                        <tr key={counsellor.id}>
+                                            <td className="px-5 py-4">
+                                                <p className="font-medium text-slate-900">
+                                                    {
+                                                        counsellor
+                                                            .user?.name
+                                                    }
+                                                </p>
+
+                                                <p className="text-sm text-slate-500">
+                                                    {
+                                                        counsellor
+                                                            .user?.email
+                                                    }
+                                                </p>
+                                            </td>
+
+                                            <td className="px-5 py-4 text-sm text-slate-700">
+                                                {
+                                                    counsellor.registration_number
+                                                }
+                                            </td>
+
+                                            <td className="px-5 py-4">
+                                                <div className="flex max-w-md flex-wrap gap-1">
+                                                    {counsellor.specializations.map(
+                                                        (
+                                                            specialization,
+                                                        ) => (
+                                                            <span
+                                                                key={
+                                                                    specialization.id
+                                                                }
+                                                                className="rounded-full bg-indigo-50 px-2 py-1 text-xs text-indigo-700"
+                                                            >
+                                                                {
+                                                                    specialization.name
+                                                                }
+                                                            </span>
+                                                        ),
+                                                    )}
+
+                                                    {counsellor
+                                                        .specializations
+                                                        .length ===
+                                                        0 && (
+                                                        <span className="text-sm text-slate-400">
+                                                            None
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+
+                                            <td className="px-5 py-4 text-sm text-slate-700">
+                                                {
+                                                    counsellor.years_of_experience
+                                                }{' '}
+                                                years
+                                            </td>
+
+                                            <td className="px-5 py-4">
+                                                <span
+                                                    className={`rounded-full px-2.5 py-1 text-xs font-medium capitalize ${
+                                                        statusClasses[
+                                                            counsellor
+                                                                .status
+                                                        ]
+                                                    }`}
+                                                >
+                                                    {
+                                                        counsellor.status
+                                                    }
+                                                </span>
+                                            </td>
+
+                                            <td className="px-5 py-4">
+                                                <div className="flex justify-end gap-2">
+                                                    <Link
+                                                        href={route(
+                                                            'admin.counsellors.show',
+                                                            counsellor.id,
+                                                        )}
+                                                        className="rounded-lg p-2 text-slate-600 hover:bg-slate-100"
+                                                        title="View"
+                                                    >
+                                                        <Eye className="h-4 w-4" />
+                                                    </Link>
+
+                                                    {permissions.update &&
+                                                        counsellor.status !==
+                                                            'archived' && (
+                                                            <Link
+                                                                href={route(
+                                                                    'admin.counsellors.edit',
+                                                                    counsellor.id,
+                                                                )}
+                                                                className="rounded-lg p-2 text-indigo-600 hover:bg-indigo-50"
+                                                                title="Edit"
+                                                            >
+                                                                <Pencil className="h-4 w-4" />
+                                                            </Link>
+                                                        )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ),
+                                )}
+
+                                {counsellors.data.length === 0 && (
+                                    <tr>
+                                        <td
+                                            colSpan="6"
+                                            className="px-5 py-12 text-center text-sm text-slate-500"
+                                        >
+                                            No counsellors found.
+                                        </td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {counsellors.links.length > 3 && (
+                        <div className="flex flex-wrap gap-2 border-t border-slate-200 px-5 py-4">
+                            {counsellors.links.map(
+                                (link, index) =>
+                                    link.url ? (
+                                        <Link
+                                            key={index}
+                                            href={link.url}
+                                            preserveScroll
+                                            className={`rounded-lg px-3 py-2 text-sm ${
+                                                link.active
+                                                    ? 'bg-indigo-600 text-white'
+                                                    : 'border border-slate-300 text-slate-700 hover:bg-slate-50'
+                                            }`}
+                                            dangerouslySetInnerHTML={{
+                                                __html: link.label,
+                                            }}
+                                        />
+                                    ) : (
+                                        <span
+                                            key={index}
+                                            className="cursor-not-allowed rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-400"
+                                            dangerouslySetInnerHTML={{
+                                                __html: link.label,
+                                            }}
+                                        />
+                                    ),
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </AdminLayout>
+    );
+}
+===== PACKAGE FILE =====
+{
+    "$schema": "https://www.schemastore.org/package.json",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite"
+    },
+    "devDependencies": {
+        "@headlessui/react": "^2.0.0",
+        "@inertiajs/react": "^2.0.0",
+        "@tailwindcss/forms": "^0.5.3",
+        "@tailwindcss/vite": "^4.0.0",
+        "@vitejs/plugin-react": "^5.2.0",
+        "autoprefixer": "^10.4.12",
+        "concurrently": "^9.0.1",
+        "laravel-vite-plugin": "^3.1",
+        "postcss": "^8.4.31",
+        "react": "^18.2.0",
+        "react-dom": "^18.2.0",
+        "tailwindcss": "^3.2.1",
+        "vite": "^8.0.0"
+    },
+    "dependencies": {
+        "axios": "^1.19.0",
+        "lucide-react": "^1.28.0"
+    }
+}
+===== CURRENT STATUS =====
+?? module-04-code-context.txt
+?? module-04-preflight.txt

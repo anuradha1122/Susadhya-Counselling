@@ -53,4 +53,24 @@ composer run dev
 ./vendor/bin/pint --test
 php artisan test
 npm run build
+
+
+### Module 04 — Counsellors and Counselling Services
+
+Status: Completed
+
+Implemented:
+
+- Counsellor administration
+- Counsellor status, archive, and restore workflow
+- Service category administration
+- Counselling service administration
+- Delivery-mode and target-age configuration
+- Custom minimum and maximum age validation
+- Service duration and pricing
+- Category-aware service restoration
+- Permission-based navigation and authorization
+- Feature-test coverage
+
+See [Module 04 documentation](docs/modules/module-04-counsellors-and-services.md).
 ```

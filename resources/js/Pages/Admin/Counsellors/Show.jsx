@@ -1,19 +1,14 @@
-import AdminLayout from '@/Layouts/AdminLayout';
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    Archive,
-    ArrowLeft,
-    Pencil,
-    RotateCcw,
-} from 'lucide-react';
+import AdminLayout from "@/Layouts/AdminLayout";
+import { Head, Link, router, usePage } from "@inertiajs/react";
+import { Archive, ArrowLeft, Pencil, RotateCcw } from "lucide-react";
 
 const statusClasses = {
-    active: 'bg-emerald-100 text-emerald-700',
-    inactive: 'bg-amber-100 text-amber-700',
-    archived: 'bg-slate-200 text-slate-700',
+    active: "bg-emerald-100 text-emerald-700",
+    inactive: "bg-amber-100 text-amber-700",
+    archived: "bg-slate-200 text-slate-700",
 };
 
-const displayValue = (value) => value || 'Not provided';
+const displayValue = (value) => value || "Not provided";
 
 export default function Show({ counsellor, permissions }) {
     const { flash = {} } = usePage().props;
@@ -21,35 +16,25 @@ export default function Show({ counsellor, permissions }) {
     const archiveCounsellor = () => {
         if (
             !window.confirm(
-                'Archive this counsellor? Their user account will also be deactivated.',
+                "Archive this counsellor? Their user account will also be deactivated.",
             )
         ) {
             return;
         }
 
-        router.delete(
-            route(
-                'admin.counsellors.destroy',
-                counsellor.id,
-            ),
-        );
+        router.delete(route("admin.counsellors.destroy", counsellor.id));
     };
 
     const restoreCounsellor = () => {
         if (
             !window.confirm(
-                'Restore this counsellor and reactivate their user account?',
+                "Restore this counsellor and reactivate their user account?",
             )
         ) {
             return;
         }
 
-        router.patch(
-            route(
-                'admin.counsellors.restore',
-                counsellor.id,
-            ),
-        );
+        router.patch(route("admin.counsellors.restore", counsellor.id));
     };
 
     return (
@@ -60,9 +45,7 @@ export default function Show({ counsellor, permissions }) {
                 <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
                     <div>
                         <Link
-                            href={route(
-                                'admin.counsellors.index',
-                            )}
+                            href={route("admin.counsellors.index")}
                             className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900"
                         >
                             <ArrowLeft className="h-4 w-4" />
@@ -74,9 +57,8 @@ export default function Show({ counsellor, permissions }) {
                         </h1>
 
                         <p className="mt-1 text-sm text-slate-500">
-                            {counsellor.professional_title ||
-                                'Counsellor'}{' '}
-                            · {counsellor.registration_number}
+                            {counsellor.professional_title || "Counsellor"} ·{" "}
+                            {counsellor.registration_number}
                         </p>
                     </div>
 
@@ -84,7 +66,7 @@ export default function Show({ counsellor, permissions }) {
                         {permissions.update && (
                             <Link
                                 href={route(
-                                    'admin.counsellors.edit',
+                                    "admin.counsellors.edit",
                                     counsellor.id,
                                 )}
                                 className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
@@ -136,16 +118,12 @@ export default function Show({ counsellor, permissions }) {
                                     Email
                                 </dt>
                                 <dd className="mt-1 font-medium text-slate-900">
-                                    {displayValue(
-                                        counsellor.user?.email,
-                                    )}
+                                    {displayValue(counsellor.user?.email)}
                                 </dd>
                             </div>
 
                             <div>
-                                <dt className="text-sm text-slate-500">
-                                    NIC
-                                </dt>
+                                <dt className="text-sm text-slate-500">NIC</dt>
                                 <dd className="mt-1 font-medium text-slate-900">
                                     {displayValue(counsellor.nic)}
                                 </dd>
@@ -156,9 +134,7 @@ export default function Show({ counsellor, permissions }) {
                                     Date of birth
                                 </dt>
                                 <dd className="mt-1 font-medium text-slate-900">
-                                    {displayValue(
-                                        counsellor.date_of_birth,
-                                    )}
+                                    {displayValue(counsellor.date_of_birth)}
                                 </dd>
                             </div>
 
@@ -168,10 +144,7 @@ export default function Show({ counsellor, permissions }) {
                                 </dt>
                                 <dd className="mt-1 font-medium capitalize text-slate-900">
                                     {displayValue(
-                                        counsellor.gender?.replaceAll(
-                                            '_',
-                                            ' ',
-                                        ),
+                                        counsellor.gender?.replaceAll("_", " "),
                                     )}
                                 </dd>
                             </div>
@@ -181,21 +154,14 @@ export default function Show({ counsellor, permissions }) {
                                     Experience
                                 </dt>
                                 <dd className="mt-1 font-medium text-slate-900">
-                                    {
-                                        counsellor.years_of_experience
-                                    }{' '}
-                                    years
+                                    {counsellor.years_of_experience} years
                                 </dd>
                             </div>
 
                             <div>
-                                <dt className="text-sm text-slate-500">
-                                    City
-                                </dt>
+                                <dt className="text-sm text-slate-500">City</dt>
                                 <dd className="mt-1 font-medium text-slate-900">
-                                    {displayValue(
-                                        counsellor.city,
-                                    )}
+                                    {displayValue(counsellor.city)}
                                 </dd>
                             </div>
 
@@ -204,9 +170,7 @@ export default function Show({ counsellor, permissions }) {
                                     Address
                                 </dt>
                                 <dd className="mt-1 whitespace-pre-line text-slate-900">
-                                    {displayValue(
-                                        counsellor.address,
-                                    )}
+                                    {displayValue(counsellor.address)}
                                 </dd>
                             </div>
 
@@ -215,9 +179,7 @@ export default function Show({ counsellor, permissions }) {
                                     Biography
                                 </dt>
                                 <dd className="mt-1 whitespace-pre-line text-slate-900">
-                                    {displayValue(
-                                        counsellor.biography,
-                                    )}
+                                    {displayValue(counsellor.biography)}
                                 </dd>
                             </div>
                         </dl>
@@ -231,9 +193,7 @@ export default function Show({ counsellor, permissions }) {
                         <div className="mt-5 space-y-4">
                             <span
                                 className={`inline-flex rounded-full px-3 py-1 text-sm font-medium capitalize ${
-                                    statusClasses[
-                                        counsellor.status
-                                    ]
+                                    statusClasses[counsellor.status]
                                 }`}
                             >
                                 {counsellor.status}
@@ -246,8 +206,8 @@ export default function Show({ counsellor, permissions }) {
 
                                 <p className="mt-1 font-medium text-slate-900">
                                     {counsellor.user?.is_active
-                                        ? 'Active'
-                                        : 'Inactive'}
+                                        ? "Active"
+                                        : "Inactive"}
                                 </p>
                             </div>
 
@@ -259,9 +219,7 @@ export default function Show({ counsellor, permissions }) {
                                         </p>
 
                                         <p className="mt-1 font-medium text-slate-900">
-                                            {
-                                                counsellor.archived_at
-                                            }
+                                            {counsellor.archived_at}
                                         </p>
                                     </div>
 
@@ -272,9 +230,7 @@ export default function Show({ counsellor, permissions }) {
 
                                         <p className="mt-1 font-medium text-slate-900">
                                             {displayValue(
-                                                counsellor
-                                                    .archived_by
-                                                    ?.name,
+                                                counsellor.archived_by?.name,
                                             )}
                                         </p>
                                     </div>
@@ -302,8 +258,7 @@ export default function Show({ counsellor, permissions }) {
                                 ),
                             )}
 
-                            {counsellor.specializations.length ===
-                                0 && (
+                            {counsellor.specializations.length === 0 && (
                                 <p className="text-sm text-slate-500">
                                     No specializations recorded.
                                 </p>
@@ -317,25 +272,20 @@ export default function Show({ counsellor, permissions }) {
                         </h2>
 
                         <div className="mt-5 space-y-3">
-                            {counsellor.languages.map(
-                                (language) => (
-                                    <div
-                                        key={language.id}
-                                        className="flex justify-between rounded-xl bg-slate-50 px-4 py-3"
-                                    >
-                                        <span className="text-sm font-medium text-slate-900">
-                                            {language.name}
-                                        </span>
+                            {counsellor.languages.map((language) => (
+                                <div
+                                    key={language.id}
+                                    className="flex justify-between rounded-xl bg-slate-50 px-4 py-3"
+                                >
+                                    <span className="text-sm font-medium text-slate-900">
+                                        {language.name}
+                                    </span>
 
-                                        <span className="text-sm capitalize text-slate-500">
-                                            {
-                                                language.pivot
-                                                    ?.proficiency
-                                            }
-                                        </span>
-                                    </div>
-                                ),
-                            )}
+                                    <span className="text-sm capitalize text-slate-500">
+                                        {language.pivot?.proficiency}
+                                    </span>
+                                </div>
+                            ))}
 
                             {counsellor.languages.length === 0 && (
                                 <p className="text-sm text-slate-500">
@@ -376,20 +326,12 @@ export default function Show({ counsellor, permissions }) {
                             <tbody className="divide-y divide-slate-100">
                                 {counsellor.qualifications.map(
                                     (qualification) => (
-                                        <tr
-                                            key={
-                                                qualification.id
-                                            }
-                                        >
+                                        <tr key={qualification.id}>
                                             <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                                                {
-                                                    qualification.qualification
-                                                }
+                                                {qualification.qualification}
                                             </td>
                                             <td className="px-4 py-3 text-sm text-slate-700">
-                                                {
-                                                    qualification.institution
-                                                }
+                                                {qualification.institution}
                                             </td>
                                             <td className="px-4 py-3 text-sm text-slate-700">
                                                 {displayValue(
@@ -410,15 +352,13 @@ export default function Show({ counsellor, permissions }) {
                                     ),
                                 )}
 
-                                {counsellor.qualifications.length ===
-                                    0 && (
+                                {counsellor.qualifications.length === 0 && (
                                     <tr>
                                         <td
                                             colSpan="5"
                                             className="px-4 py-10 text-center text-sm text-slate-500"
                                         >
-                                            No qualifications
-                                            recorded.
+                                            No qualifications recorded.
                                         </td>
                                     </tr>
                                 )}

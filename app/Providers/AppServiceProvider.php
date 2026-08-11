@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\CounsellingService;
 use App\Models\User;
+use App\Policies\CounsellingServicePolicy;
 use App\Policies\RolePolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Gate;
@@ -20,6 +22,10 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
+        Gate::policy(
+            CounsellingService::class,
+            CounsellingServicePolicy::class
+        );
 
         Gate::before(function (
             User $user,

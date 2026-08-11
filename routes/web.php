@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\CounsellingServiceController;
 use App\Http\Controllers\Admin\CounsellorController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\ServiceCategoryController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Counsellor\DashboardController as CounsellorDashboardController;
 use App\Http\Controllers\DashboardRedirectController;
@@ -44,6 +46,26 @@ Route::middleware(['auth', 'active'])->group(function () {
                 'counsellors/{counsellor}/restore',
                 [CounsellorController::class, 'restore']
             )->name('counsellors.restore');
+
+            Route::resource(
+                'service-categories',
+                ServiceCategoryController::class
+            );
+
+            Route::patch(
+                'service-categories/{service_category}/restore',
+                [ServiceCategoryController::class, 'restore']
+            )->name('service-categories.restore');
+
+            Route::resource(
+                'counselling-services',
+                CounsellingServiceController::class
+            );
+
+            Route::patch(
+                'counselling-services/{counselling_service}/restore',
+                [CounsellingServiceController::class, 'restore']
+            )->name('counselling-services.restore');
 
         });
 

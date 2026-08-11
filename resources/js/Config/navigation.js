@@ -1,4 +1,5 @@
 import {
+    BriefcaseBusiness,
     CalendarDays,
     CircleDollarSign,
     Clock3,
@@ -8,51 +9,63 @@ import {
     Settings,
     Stethoscope,
     Users,
-} from 'lucide-react';
+    Tags,
+} from "lucide-react";
 
 export const adminNavigation = [
     {
-        label: 'Dashboard',
-        routeName: 'admin.dashboard',
+        label: "Dashboard",
+        routeName: "admin.dashboard",
         icon: LayoutDashboard,
-        permission: 'dashboard.admin.view',
+        permission: "dashboard.admin.view",
     },
     {
-        label: 'Counsellors',
-        routeName: 'admin.counsellors.index',
-        active: 'admin.counsellors.*',
+        label: "Counsellors",
+        routeName: "admin.counsellors.index",
         icon: Stethoscope,
-        permission: 'counsellors.view',
+        permission: "counsellors.view",
     },
     {
-        label: 'Appointments',
+        label: "Service Categories",
+        routeName: "admin.service-categories.index",
+        icon: Tags,
+        permission: "services.view",
+    },
+    {
+        label: "Counselling Services",
+        routeName: "admin.counselling-services.index",
+        icon: BriefcaseBusiness,
+        permission: "services.view",
+    },
+    {
+        label: "Appointments",
         icon: CalendarDays,
         disabled: true,
     },
     {
-        label: 'Payments',
+        label: "Payments",
         icon: CircleDollarSign,
         disabled: true,
     },
     {
-        label: 'Users',
-        routeName: 'admin.users.index',
+        label: "Users",
+        routeName: "admin.users.index",
         icon: Users,
-        permission: 'users.view',
+        permission: "users.view",
     },
     {
-        label: 'Roles & Permissions',
-        routeName: 'admin.roles.index',
+        label: "Roles & Permissions",
+        routeName: "admin.roles.index",
         icon: KeyRound,
-        permission: 'roles.view',
+        permission: "roles.view",
     },
     {
-        label: 'Audit Logs',
+        label: "Audit Logs",
         icon: FileClock,
         disabled: true,
     },
     {
-        label: 'Settings',
+        label: "Settings",
         icon: Settings,
         disabled: true,
     },
@@ -60,18 +73,18 @@ export const adminNavigation = [
 
 export const counsellorNavigation = [
     {
-        label: 'Dashboard',
-        routeName: 'counsellor.dashboard',
+        label: "Dashboard",
+        routeName: "counsellor.dashboard",
         icon: LayoutDashboard,
-        permission: 'dashboard.counsellor.view',
+        permission: "dashboard.counsellor.view",
     },
     {
-        label: 'My Appointments',
+        label: "My Appointments",
         icon: CalendarDays,
         disabled: true,
     },
     {
-        label: 'My Availability',
+        label: "My Availability",
         icon: Clock3,
         disabled: true,
     },

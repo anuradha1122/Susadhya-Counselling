@@ -1,0 +1,44 @@
+?? module-04-preflight.txt
+15559f5 feat: complete counsellor management module
+e75d0d4 feat: complete user role and permission management
+
+  Migration name .................................................................................................................... Batch / Status  
+  0001_01_01_000000_create_users_table ..................................................................................................... [1] Ran  
+  0001_01_01_000001_create_cache_table ..................................................................................................... [1] Ran  
+  0001_01_01_000002_create_jobs_table ...................................................................................................... [1] Ran  
+  2026_08_03_185448_create_permission_tables ............................................................................................... [1] Ran  
+  2026_08_03_185458_add_account_fields_to_users_table ...................................................................................... [1] Ran  
+  2026_08_11_090857_create_specializations_table ........................................................................................... [1] Ran  
+  2026_08_11_090858_create_languages_table ................................................................................................. [1] Ran  
+  2026_08_11_090859_create_counsellor_profiles_table ....................................................................................... [1] Ran  
+  2026_08_11_090900_create_counsellor_qualifications_table ................................................................................. [1] Ran  
+  2026_08_11_090901_create_counsellor_profile_specialization_table ......................................................................... [1] Ran  
+  2026_08_11_090902_create_counsellor_profile_language_table ............................................................................... [1] Ran  
+
+zsh: command not found: rg
+
+  GET|HEAD        admin/counsellors ........................................................................................................... admin.counsellors.index › Admin\CounsellorController@index
+  POST            admin/counsellors ........................................................................................................... admin.counsellors.store › Admin\CounsellorController@store
+  GET|HEAD        admin/counsellors/create .................................................................................................. admin.counsellors.create › Admin\CounsellorController@create
+  GET|HEAD        admin/counsellors/{counsellor} ................................................................................................ admin.counsellors.show › Admin\CounsellorController@show
+  PUT|PATCH       admin/counsellors/{counsellor} ............................................................................................ admin.counsellors.update › Admin\CounsellorController@update
+  DELETE          admin/counsellors/{counsellor} .......................................................................................... admin.counsellors.destroy › Admin\CounsellorController@destroy
+  GET|HEAD        admin/counsellors/{counsellor}/edit ........................................................................................... admin.counsellors.edit › Admin\CounsellorController@edit
+  PATCH           admin/counsellors/{counsellor}/restore .................................................................................. admin.counsellors.restore › Admin\CounsellorController@restore
+  GET|HEAD        admin/dashboard ............................................................................................................................ admin.dashboard › Admin\DashboardController
+  GET|HEAD        admin/roles ............................................................................................................................. admin.roles.index › Admin\RoleController@index
+  POST            admin/roles ............................................................................................................................. admin.roles.store › Admin\RoleController@store
+  GET|HEAD        admin/roles/create .................................................................................................................... admin.roles.create › Admin\RoleController@create
+  PUT|PATCH       admin/roles/{role} .................................................................................................................... admin.roles.update › Admin\RoleController@update
+  DELETE          admin/roles/{role} .................................................................................................................. admin.roles.destroy › Admin\RoleController@destroy
+  GET|HEAD        admin/roles/{role}/edit ................................................................................................................... admin.roles.edit › Admin\RoleController@edit
+  GET|HEAD        admin/users ............................................................................................................................. admin.users.index › Admin\UserController@index
+  POST            admin/users ............................................................................................................................. admin.users.store › Admin\UserController@store
+  GET|HEAD        admin/users/create .................................................................................................................... admin.users.create › Admin\UserController@create
+  PUT|PATCH       admin/users/{user} .................................................................................................................... admin.users.update › Admin\UserController@update
+  DELETE          admin/users/{user} .................................................................................................................. admin.users.destroy › Admin\UserController@destroy
+  GET|HEAD        admin/users/{user}/edit ................................................................................................................... admin.users.edit › Admin\UserController@edit
+  PATCH           admin/users/{user}/status ....................................................................................................... admin.users.status › Admin\UserController@updateStatus
+
+                                                                                                                                                                                       Showing [22] routes
+
