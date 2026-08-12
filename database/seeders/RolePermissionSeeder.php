@@ -16,6 +16,7 @@ class RolePermissionSeeder extends Seeder
         $permissions = [
             'dashboard.admin.view',
             'dashboard.counsellor.view',
+            'dashboard.client.view',
 
             'users.view',
             'users.create',
@@ -29,6 +30,11 @@ class RolePermissionSeeder extends Seeder
             'settings.update',
 
             'audit-logs.view',
+
+            'clients.view',
+            'clients.create',
+            'clients.update',
+            'clients.archive',
 
             'counsellors.view',
             'counsellors.create',
@@ -76,6 +82,11 @@ class RolePermissionSeeder extends Seeder
             'guard_name' => 'web',
         ]);
 
+        $client = Role::firstOrCreate([
+            'name' => 'client',
+            'guard_name' => 'web',
+        ]);
+
         $superAdmin->syncPermissions(Permission::all());
 
         $admin->syncPermissions([
@@ -89,6 +100,11 @@ class RolePermissionSeeder extends Seeder
             'settings.update',
 
             'audit-logs.view',
+
+            'clients.view',
+            'clients.create',
+            'clients.update',
+            'clients.archive',
 
             'counsellors.view',
             'counsellors.create',
@@ -113,6 +129,13 @@ class RolePermissionSeeder extends Seeder
             'appointments.update-own',
             'availability.view-own',
             'availability.manage-own',
+            'payments.view-own',
+        ]);
+
+        $client->syncPermissions([
+            'dashboard.client.view',
+            'appointments.view-own',
+            'appointments.update-own',
             'payments.view-own',
         ]);
 

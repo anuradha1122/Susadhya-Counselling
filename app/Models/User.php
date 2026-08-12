@@ -77,8 +77,18 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasRole('counsellor');
     }
 
+    public function isClient(): bool
+    {
+        return $this->hasRole('client');
+    }
+
     public function counsellorProfile(): HasOne
     {
         return $this->hasOne(CounsellorProfile::class);
+    }
+
+    public function clientProfile(): HasOne
+    {
+        return $this->hasOne(ClientProfile::class);
     }
 }

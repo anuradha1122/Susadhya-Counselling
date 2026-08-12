@@ -22,6 +22,11 @@ class DashboardRedirectController extends Controller
                 ->route('counsellor.dashboard');
         }
 
+        if ($user->can('dashboard.client.view')) {
+            return redirect()
+                ->route('client.dashboard');
+        }
+
         abort(
             403,
             'No dashboard has been assigned to this account.'

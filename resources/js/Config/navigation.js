@@ -4,12 +4,15 @@ import {
     CircleDollarSign,
     Clock3,
     FileClock,
+    HeartHandshake,
     KeyRound,
     LayoutDashboard,
     Settings,
+    ShieldCheck,
     Stethoscope,
-    Users,
     Tags,
+    UserRoundCog,
+    Users,
 } from "lucide-react";
 
 export const adminNavigation = [
@@ -18,6 +21,12 @@ export const adminNavigation = [
         routeName: "admin.dashboard",
         icon: LayoutDashboard,
         permission: "dashboard.admin.view",
+    },
+    {
+        label: "Clients",
+        routeName: "admin.clients.index",
+        icon: Users,
+        permission: "clients.view",
     },
     {
         label: "Counsellors",
@@ -86,6 +95,49 @@ export const counsellorNavigation = [
     {
         label: "My Availability",
         icon: Clock3,
+        disabled: true,
+    },
+];
+
+export const clientNavigation = [
+    {
+        label: "Dashboard",
+        routeName: "client.dashboard",
+        icon: LayoutDashboard,
+        permission: "dashboard.client.view",
+    },
+    {
+        label: "Client Profile",
+        routeName: "client.profile.show",
+        icon: UserRoundCog,
+        permission: "dashboard.client.view",
+    },
+    {
+        label: "Emergency Contacts",
+        routeName: "client.emergency-contacts.index",
+        icon: HeartHandshake,
+        permission: "dashboard.client.view",
+    },
+    {
+        label: "Counselling Preferences",
+        routeName: "client.preferences.show",
+        icon: Stethoscope,
+        permission: "dashboard.client.view",
+    },
+    {
+        label: "Privacy & Consent",
+        routeName: "client.privacy.show",
+        icon: ShieldCheck,
+        permission: "dashboard.client.view",
+    },
+    {
+        label: "Appointments",
+        icon: CalendarDays,
+        disabled: true,
+    },
+    {
+        label: "Payments",
+        icon: CircleDollarSign,
         disabled: true,
     },
 ];
