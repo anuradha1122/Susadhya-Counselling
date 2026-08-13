@@ -79,4 +79,27 @@ class CounsellorProfile extends Model
     {
         return $this->status === 'archived';
     }
+
+    public function availabilityRules(): HasMany
+    {
+        return $this->hasMany(CounsellorAvailabilityRule::class);
+    }
+
+    public function availabilityBreaks(): HasMany
+    {
+        return $this->hasManyThrough(
+            CounsellorAvailabilityBreak::class,
+            CounsellorAvailabilityRule::class
+        );
+    }
+
+    public function blockedSlots(): HasMany
+    {
+        return $this->hasMany(CounsellorBlockedSlot::class);
+    }
+
+    public function leaveDays(): HasMany
+    {
+        return $this->hasMany(CounsellorLeaveDay::class);
+    }
 }

@@ -1,15 +1,9 @@
-import { counsellorNavigation } from '@/Config/navigation';
-import AppLayout from '@/Layouts/AppLayout';
+import { counsellorNavigation } from "@/Config/navigation";
+import AppLayout from "@/Layouts/AppLayout";
 
-export default function CounsellorLayout({
-    title,
-    children,
-}) {
+export default function CounsellorLayout({ header, children }) {
     return (
-        <AppLayout
-            title={title}
-            navigation={counsellorNavigation}
-        >
+        <AppLayout navigation={counsellorNavigation} header={header}>
             {children}
         </AppLayout>
     );

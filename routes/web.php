@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AvailabilityController as AdminAvailabilityController;
 use App\Http\Controllers\Admin\ClientController as AdminClientController;
 use App\Http\Controllers\Admin\CounsellingServiceController;
 use App\Http\Controllers\Admin\CounsellorController;
@@ -12,7 +13,11 @@ use App\Http\Controllers\Client\EmergencyContactController as ClientEmergencyCon
 use App\Http\Controllers\Client\PreferenceController as ClientPreferenceController;
 use App\Http\Controllers\Client\PrivacySettingsController as ClientPrivacySettingsController;
 use App\Http\Controllers\Client\ProfileController as ClientProfileController;
+use App\Http\Controllers\Counsellor\AvailabilityBreakController as CounsellorAvailabilityBreakController;
+use App\Http\Controllers\Counsellor\AvailabilityController as CounsellorAvailabilityController;
+use App\Http\Controllers\Counsellor\BlockedSlotController as CounsellorBlockedSlotController;
 use App\Http\Controllers\Counsellor\DashboardController as CounsellorDashboardController;
+use App\Http\Controllers\Counsellor\LeaveDayController as CounsellorLeaveDayController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -91,6 +96,9 @@ Route::middleware(['auth', 'active'])->group(function () {
                 'counselling-services/{counselling_service}/restore',
                 [CounsellingServiceController::class, 'restore']
             )->name('counselling-services.restore');
+
+            Route::get('/availability', [AdminAvailabilityController::class, 'index'])
+                ->name('availability.index');
         });
 
     Route::prefix('counsellor')
@@ -101,6 +109,45 @@ Route::middleware(['auth', 'active'])->group(function () {
                 '/dashboard',
                 CounsellorDashboardController::class
             )->name('dashboard');
+
+            Route::get('/availability', [CounsellorAvailabilityController::class, 'index'])
+                ->name('availability.index');
+
+            Route::post('/availability/rules', [CounsellorAvailabilityController::class, 'store'])
+                ->name('availability.rules.store');
+
+            Route::patch('/availability/rules/{availabilityRule}', [CounsellorAvailabilityController::class, 'update'])
+                ->name('availability.rules.update');
+
+            Route::delete('/availability/rules/{availabilityRule}', [CounsellorAvailabilityController::class, 'destroy'])
+                ->name('availability.rules.destroy');
+
+            Route::post('/availability/rules/{availabilityRule}/breaks', [CounsellorAvailabilityBreakController::class, 'store'])
+                ->name('availability.breaks.store');
+
+            Route::patch('/availability/breaks/{availabilityBreak}', [CounsellorAvailabilityBreakController::class, 'update'])
+                ->name('availability.breaks.update');
+
+            Route::delete('/availability/breaks/{availabilityBreak}', [CounsellorAvailabilityBreakController::class, 'destroy'])
+                ->name('availability.breaks.destroy');
+
+            Route::post('/availability/blocked-slots', [CounsellorBlockedSlotController::class, 'store'])
+                ->name('availability.blocked-slots.store');
+
+            Route::patch('/availability/blocked-slots/{blockedSlot}', [CounsellorBlockedSlotController::class, 'update'])
+                ->name('availability.blocked-slots.update');
+
+            Route::delete('/availability/blocked-slots/{blockedSlot}', [CounsellorBlockedSlotController::class, 'destroy'])
+                ->name('availability.blocked-slots.destroy');
+
+            Route::post('/availability/leave-days', [CounsellorLeaveDayController::class, 'store'])
+                ->name('availability.leave-days.store');
+
+            Route::patch('/availability/leave-days/{leaveDay}', [CounsellorLeaveDayController::class, 'update'])
+                ->name('availability.leave-days.update');
+
+            Route::delete('/availability/leave-days/{leaveDay}', [CounsellorLeaveDayController::class, 'destroy'])
+                ->name('availability.leave-days.destroy');
         });
 
     Route::prefix('client')

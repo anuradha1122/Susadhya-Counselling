@@ -35,6 +35,12 @@ export const adminNavigation = [
         permission: "counsellors.view",
     },
     {
+        label: "Availability",
+        routeName: "admin.availability.index",
+        icon: Clock3,
+        permission: "dashboard.admin.view",
+    },
+    {
         label: "Service Categories",
         routeName: "admin.service-categories.index",
         icon: Tags,
@@ -94,8 +100,9 @@ export const counsellorNavigation = [
     },
     {
         label: "My Availability",
+        routeName: "counsellor.availability.index",
         icon: Clock3,
-        disabled: true,
+        permission: "dashboard.counsellor.view",
     },
 ];
 
