@@ -13,6 +13,7 @@ import {
     Tags,
     UserRoundCog,
     Users,
+    Search,
 } from "lucide-react";
 
 export const adminNavigation = [
@@ -111,6 +112,12 @@ export const clientNavigation = [
         label: "Dashboard",
         routeName: "client.dashboard",
         icon: LayoutDashboard,
+        permission: "dashboard.client.view",
+    },
+    {
+        label: "Find Counsellors",
+        routeName: "client.counsellors.index",
+        icon: Search,
         permission: "dashboard.client.view",
     },
     {

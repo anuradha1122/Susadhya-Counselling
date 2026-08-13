@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ServiceCategoryController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Client\CounsellorDiscoveryController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\EmergencyContactController as ClientEmergencyContactController;
 use App\Http\Controllers\Client\PreferenceController as ClientPreferenceController;
@@ -210,6 +211,12 @@ Route::middleware(['auth', 'active'])->group(function () {
                 ClientPrivacySettingsController::class,
                 'update',
             ])->name('privacy.update');
+
+            Route::get('/counsellors', [CounsellorDiscoveryController::class, 'index'])
+                ->name('counsellors.index');
+
+            Route::get('/counsellors/{counsellor}', [CounsellorDiscoveryController::class, 'show'])
+                ->name('counsellors.show');
         });
 
     Route::get('/profile', [
