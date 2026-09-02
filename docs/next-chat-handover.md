@@ -1,225 +1,293 @@
+# Susadhya Counselling Platform - Next Chat Handover
 
-# Next Chat Handover - Susadhya Counselling Platform
+## Project
 
-## Current Status
+Susadhya Counselling Platform
 
-Workbook module M08: Search & Counsellor Discovery is completed.
+## Tech Stack
 
-The project is following the Google Sheet workbook module order.
+- Laravel
+- React
+- Inertia
+- MySQL
+- Tailwind CSS
+- Spatie Laravel Permission
 
-Completed recently:
+## Development Style
 
+Use the existing coding style and UI structure.
+
+Preferred delivery style:
+
+- Terminal commands first
+- Then file path
+- Then full code or exact replacement
+- Include tests
+- Include documentation updates
+- Include final git commands
+
+Do not skip documentation updates.
+
+## Current Completed Modules
+
+### M01 - Platform Foundation
+
+Completed.
+
+### M02 - Authentication and Access
+
+Completed.
+
+### M03 - User and Staff Administration
+
+Completed.
+
+### M04 - Client Registration and Profile
+
+Completed.
+
+Latest known commit:
+
+- `8da4bf7 feat: complete client registration and profile management`
+
+### M05 - Counsellor Management
+
+Completed.
+
+### M06 - Services and Categories
+
+Completed.
+
+Latest known commit:
+
+- `7f4f9a3 feat: complete counsellor and counselling service management`
+
+### M07 - Availability and Calendar
+
+Completed.
+
+Latest known commit:
+
+- `e921c70 feat: complete availability and calendar management`
+
+### M08 - Search and Counsellor Discovery
+
+Completed.
+
+Latest known commit:
+
+- `e1ab40b feat: complete counsellor discovery`
+
+### M09 - Appointments and Scheduling
+
+Completed.
+
+Expected latest commit after final documentation:
+
+- `docs: finalize appointment scheduling module`
+
+## Workbook Source of Truth
+
+Continue following the project workbook:
+
+- `Susadhya Counselling Platform — Project Workbook`
+
+Workbook modules already followed:
+
+- M01 Platform Foundation
+- M02 Authentication & Access
+- M03 User & Staff Administration
 - M04 Client Registration & Profile
 - M05 Counsellor Management
 - M06 Services & Categories
 - M07 Availability & Calendar
 - M08 Search & Counsellor Discovery
-
-Next module:
-
 - M09 Appointments & Scheduling
 
-## Latest Completed Module
+Next module should be selected from the workbook after M09.
 
-### M08 Search & Counsellor Discovery
+## M09 Final Summary
 
-Implemented:
+M09 Appointments & Scheduling implemented the full MVP appointment lifecycle.
 
-- Client counsellor discovery page
-- Client counsellor profile detail page
-- Keyword search
-- Filter by specialization
-- Filter by language
-- Filter by counselling mode
-- Filter by availability day
-- Active counsellor-only search results
-- Archived counsellor protection
-- Inactive counsellor user account protection
-- Rating placeholder
-- Availability summary display
-- Availability breaks display on profile detail
-- Feature tests
+Completed features:
 
-## Key Business Rules Added
+- Appointment database foundation
+- Appointment status history
+- Slot generation service
+- Conflict detection service
+- Client booking endpoint
+- Client booking UI
+- Client appointment list
+- Client appointment cancellation
+- Client appointment rescheduling
+- Counsellor appointment dashboard
+- Counsellor appointment confirmation
+- Counsellor appointment completion
+- Counsellor no-show workflow
+- Admin appointment oversight
+- Admin appointment status management
+- Appointment reminder notification
+- Appointment reminder command
+- Scheduler hook
+- Dashboard appointment metrics
+- Final documentation and QA
 
-### Discoverable Counsellors
+## M09 Important Files
 
-A counsellor is discoverable only when:
+### Models
 
-- Counsellor profile status is active
-- Linked user account is active
+- `app/Models/Appointment.php`
+- `app/Models/AppointmentStatusHistory.php`
 
-Archived counsellors are hidden.
+### Services
 
-Counsellors with inactive user accounts are hidden.
+- `app/Services/Appointments/AppointmentSlotService.php`
+- `app/Services/Appointments/AppointmentConflictService.php`
+- `app/Services/Appointments/AppointmentDashboardMetricService.php`
 
-### Search Filters
+### Client Appointment Files
 
-Clients can filter counsellors by:
+- `app/Http/Controllers/Client/AppointmentController.php`
+- `app/Http/Controllers/Client/AppointmentSlotController.php`
+- `app/Http/Requests/Client/StoreAppointmentRequest.php`
+- `app/Http/Requests/Client/CancelAppointmentRequest.php`
+- `app/Http/Requests/Client/RescheduleAppointmentRequest.php`
+- `app/Http/Requests/Client/RescheduleAppointmentSlotRequest.php`
+- `app/Http/Requests/Client/AppointmentSlotRequest.php`
+- `resources/js/Pages/Client/Appointments/Index.jsx`
+- `resources/js/Pages/Client/Counsellors/Show.jsx`
 
-- Keyword
-- Specialization
-- Language
-- Counselling mode
-- Availability day
+### Counsellor Appointment Files
 
-### Mode Filtering
+- `app/Http/Controllers/Counsellor/AppointmentController.php`
+- `app/Http/Requests/Counsellor/ConfirmAppointmentRequest.php`
+- `app/Http/Requests/Counsellor/MarkAppointmentOutcomeRequest.php`
+- `resources/js/Pages/Counsellor/Appointments/Index.jsx`
 
-Mode filtering uses M07 active availability rules.
+### Admin Appointment Files
 
-When filtering by online or in-person mode, counsellors with `both` mode are included.
+- `app/Http/Controllers/Admin/AppointmentController.php`
+- `app/Http/Requests/Admin/UpdateAppointmentStatusRequest.php`
+- `resources/js/Pages/Admin/Appointments/Index.jsx`
 
-### Profile Detail Protection
+### Reminder Files
 
-The counsellor detail page returns 404 when:
+- `app/Notifications/AppointmentReminderNotification.php`
+- `app/Console/Commands/SendAppointmentReminders.php`
+- `routes/console.php`
 
-- Counsellor profile is archived or inactive
-- Linked user account is inactive
+### Dashboard Metric Files
 
-### Appointment Booking
+- `app/Services/Appointments/AppointmentDashboardMetricService.php`
+- `resources/js/Components/Appointments/AppointmentMetricGrid.jsx`
+- `resources/js/Pages/Admin/Dashboard.jsx`
+- `resources/js/Pages/Client/Dashboard.jsx`
+- `resources/js/Pages/Counsellor/Dashboard.jsx`
 
-Appointment booking was intentionally not implemented in M08.
+### Documentation Files
 
-Appointment booking belongs to M09.
+- `modules/09-appointments-and-scheduling.md`
+- `development-log.md`
+- `change-log.md`
+- `next-chat-handover.md`
 
-## Key Files Added
+## M09 Routes
 
-### Backend
+### Client
 
-- app/Http/Controllers/Client/CounsellorDiscoveryController.php
+- `client.appointments.index`
+- `client.appointments.store`
+- `client.appointments.cancel`
+- `client.appointments.reschedule-slots`
+- `client.appointments.reschedule`
+- `client.counsellors.appointment-slots.index`
 
-### Frontend
+### Counsellor
 
-- resources/js/Pages/Client/Counsellors/Index.jsx
-- resources/js/Pages/Client/Counsellors/Show.jsx
+- `counsellor.appointments.index`
+- `counsellor.appointments.confirm`
+- `counsellor.appointments.complete`
+- `counsellor.appointments.no-show`
 
-### Tests
+### Admin
 
-- tests/Feature/Client/CounsellorDiscoveryTest.php
+- `admin.appointments.index`
+- `admin.appointments.update-status`
 
-### Documentation
+## M09 Reminder Command
 
-- docs/modules/08-search-and-counsellor-discovery.md
-
-## Key Files Updated
-
-- routes/web.php
-- resources/js/Config/navigation.js
-- docs/development-log.md
-- docs/next-chat-handover.md
-
-## Routes Added
-
-Client routes:
-
-- client.counsellors.index
-- client.counsellors.show
-
-URLs:
-
-- /client/counsellors
-- /client/counsellors/{counsellor}
-
-## Verification Commands
-
-Run these before continuing to M09:
+Send reminders:
 
 ```bash
-./vendor/bin/pint --test \
-    app/Http/Controllers/Client/CounsellorDiscoveryController.php \
-    tests/Feature/Client/CounsellorDiscoveryTest.php \
-    routes/web.php
+php artisan appointments:send-reminders
+```
 
-npx prettier --check \
-    resources/js/Pages/Client/Counsellors/Index.jsx \
-    resources/js/Pages/Client/Counsellors/Show.jsx \
-    resources/js/Config/navigation.js
+Dry run:
 
-npm run build
+```bash
+php artisan appointments:send-reminders --dry-run
+```
 
-php artisan test tests/Feature/Client/CounsellorDiscoveryTest.php
-Next Module: M09 Appointments & Scheduling
+Scheduler hook:
 
-Workbook M09 details:
+```php
+Schedule::command('appointments:send-reminders')->everyFiveMinutes();
+```
 
-Module: Appointments & Scheduling
-Phase: P3
-Release: MVP
-Primary Roles: Client, Counsellor, Admin
-Scope: Book/reschedule/cancel; status flow; meeting link/location; reminders hook
-Acceptance: Appointment cannot double-book counsellor or client
+Server cron later:
 
-Recommended M09 implementation plan:
+```bash
+* * * * * php /path-to-project/artisan schedule:run >> /dev/null 2>&1
+```
 
-Appointment database foundation.
-Appointment statuses and workflow.
-Slot generation using M07 availability.
-Exclude breaks, blocked slots, leave days, and existing bookings.
-Client appointment booking flow.
-Counsellor appointment dashboard.
-Admin appointment oversight.
-Reschedule/cancel logic.
-Double-booking protection.
-Feature tests.
-Documentation update.
-Git commit.
-
-Important:
-
-M09 must use M07 availability data.
-M09 must use M08 counsellor discovery/profile flow as the entry point.
-M09 must prevent double-booking for both counsellor and client.
-
----
-
-# 5. Final verification
+## M09 Test Command
 
 Run:
 
 ```bash
-./vendor/bin/pint --test \
-    app/Http/Controllers/Client/CounsellorDiscoveryController.php \
-    tests/Feature/Client/CounsellorDiscoveryTest.php \
-    routes/web.php
+php artisan test \
+    tests/Feature/Appointments/AppointmentSlotServiceTest.php \
+    tests/Feature/Appointments/AppointmentReminderCommandTest.php \
+    tests/Feature/Appointments/AppointmentDashboardMetricServiceTest.php \
+    tests/Feature/Appointments/AppointmentDashboardRouteTest.php \
+    tests/Feature/Client/AppointmentBookingTest.php \
+    tests/Feature/Client/AppointmentListTest.php \
+    tests/Feature/Client/AppointmentCancellationTest.php \
+    tests/Feature/Client/AppointmentReschedulingTest.php \
+    tests/Feature/Counsellor/AppointmentDashboardTest.php \
+    tests/Feature/Counsellor/AppointmentOutcomeTest.php \
+    tests/Feature/Admin/AppointmentOversightTest.php
+```
 
-npx prettier --check \
-    resources/js/Pages/Client/Counsellors/Index.jsx \
-    resources/js/Pages/Client/Counsellors/Show.jsx \
-    resources/js/Config/navigation.js
+Expected result:
 
+- All M09 tests pass.
+
+## Final Verification Commands
+
+Run:
+
+```bash
 php artisan optimize:clear
 
+php artisan route:list --name=client.appointments
+php artisan route:list --name=counsellor.appointments
+php artisan route:list --name=admin.appointments
+
+php artisan list | grep appointments
+
 npm run build
+```
 
-php artisan test tests/Feature/Client/CounsellorDiscoveryTest.php
+## Next Step
 
-git status --short
+Continue with the next workbook module after M09.
 
-Expected:
+Before starting the next module:
 
-PASS
-11 passed
-
-Expected routes:
-
-php artisan route:list --name=client.counsellors
-
-Expected:
-
-client.counsellors.index
-client.counsellors.show
-6. Git add and commit
-
-Run:
-
-git add \
-    app/Http/Controllers/Client/CounsellorDiscoveryController.php \
-    resources/js/Pages/Client/Counsellors/Index.jsx \
-    resources/js/Pages/Client/Counsellors/Show.jsx \
-    resources/js/Config/navigation.js \
-    routes/web.php \
-    tests/Feature/Client/CounsellorDiscoveryTest.php \
-    docs/modules/08-search-and-counsellor-discovery.md \
-    docs/development-log.md \
-    docs/next-chat-handover.md
-
+1. Check workbook module order.
+2. Confirm latest git status is clean.
+3. Continue the same UI/UX design structure.
+4. Keep the same full-code delivery style.
+5. Include docs and git commits for every completed section.
