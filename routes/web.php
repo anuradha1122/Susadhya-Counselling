@@ -158,6 +158,12 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::patch('/appointments/{appointment}/confirm', [CounsellorAppointmentController::class, 'confirm'])
                 ->name('appointments.confirm');
+
+            Route::patch('/appointments/{appointment}/complete', [CounsellorAppointmentController::class, 'complete'])
+                ->name('appointments.complete');
+
+            Route::patch('/appointments/{appointment}/no-show', [CounsellorAppointmentController::class, 'noShow'])
+                ->name('appointments.no-show');
         });
 
     Route::prefix('client')

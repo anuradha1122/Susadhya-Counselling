@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Counsellor;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Counsellor\ConfirmAppointmentRequest;
+use App\Http\Requests\Counsellor\MarkAppointmentOutcomeRequest;
 use App\Models\Appointment;
 use App\Models\CounsellorProfile;
 use Carbon\CarbonImmutable;
@@ -167,6 +168,96 @@ class AppointmentController extends Controller
             ->with('success', 'Appointment confirmed successfully.');
     }
 
+    public function complete(
+        MarkAppointmentOutcomeRequest $request,
+        Appointment $appointment
+    ): RedirectResponse {
+        $this->markOutcome(
+            request: $request,
+            appointment: $appointment,
+            toStatus: Appointment::STATUS_COMPLETED,
+            historyReason: 'Appointment marked as completed by counsellor.',
+            successMessage: 'Appointment marked as completed successfully.',
+            source: 'counsellor_completion'
+        );
+
+        return redirect()
+            ->route('counsellor.appointments.index')
+            ->with('success', 'Appointment marked as completed successfully.');
+    }
+
+    public function noShow(
+        MarkAppointmentOutcomeRequest $request,
+        Appointment $appointment
+    ): RedirectResponse {
+        $this->markOutcome(
+            request: $request,
+            appointment: $appointment,
+            toStatus: Appointment::STATUS_NO_SHOW,
+            historyReason: 'Appointment marked as no-show by counsellor.',
+            successMessage: 'Appointment marked as no-show successfully.',
+            source: 'counsellor_no_show'
+        );
+
+        return redirect()
+            ->route('counsellor.appointments.index')
+            ->with('success', 'Appointment marked as no-show successfully.');
+    }
+
+    private function markOutcome(
+        MarkAppointmentOutcomeRequest $request,
+        Appointment $appointment,
+        string $toStatus,
+        string $historyReason,
+        string $successMessage,
+        string $source
+    ): void {
+        $validated = $request->validated();
+
+        $counsellorProfile = CounsellorProfile::query()
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        abort_unless($appointment->counsellor_profile_id === $counsellorProfile->id, 404);
+
+        if ($appointment->status !== Appointment::STATUS_CONFIRMED) {
+            throw ValidationException::withMessages([
+                'appointment' => 'Only confirmed appointments can be closed.',
+            ]);
+        }
+
+        DB::transaction(function () use (
+            $appointment,
+            $request,
+            $validated,
+            $toStatus,
+            $historyReason,
+            $source
+        ): void {
+            $fromStatus = $appointment->status;
+
+            $appointment->forceFill([
+                'status' => $toStatus,
+                'counsellor_notes' => $validated['counsellor_notes'] ?? $appointment->counsellor_notes,
+                'updated_by' => $request->user()->id,
+            ])->save();
+
+            $appointment->statusHistories()->create([
+                'from_status' => $fromStatus,
+                'to_status' => $toStatus,
+                'reason' => $historyReason,
+                'metadata' => [
+                    'source' => $source,
+                    'appointment_date' => $appointment->appointment_date?->toDateString(),
+                    'start_time' => $appointment->start_time?->format('H:i'),
+                    'end_time' => $appointment->end_time?->format('H:i'),
+                    'mode' => $appointment->mode,
+                ],
+                'changed_by' => $request->user()->id,
+            ]);
+        });
+    }
+
     private function appointmentPayload(Appointment $appointment): array
     {
         return [
@@ -187,6 +278,8 @@ class AppointmentController extends Controller
             'cancelled_at' => $appointment->cancelled_at?->toDateTimeString(),
             'reminder_scheduled_at' => $appointment->reminder_scheduled_at?->toDateTimeString(),
             'can_be_confirmed' => $appointment->status === Appointment::STATUS_PENDING,
+            'can_be_completed' => $appointment->status === Appointment::STATUS_CONFIRMED,
+            'can_be_marked_no_show' => $appointment->status === Appointment::STATUS_CONFIRMED,
             'client' => [
                 'id' => $appointment->clientProfile?->id,
                 'name' => $appointment->clientProfile?->user?->name,

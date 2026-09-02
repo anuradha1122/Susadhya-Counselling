@@ -65,7 +65,7 @@ function ConfirmAppointmentForm({ appointment }) {
     if (!appointment.can_be_confirmed) {
         return (
             <SecondaryButton type="button" disabled>
-                Already processed
+                Confirm locked
             </SecondaryButton>
         );
     }
@@ -148,7 +148,10 @@ function ConfirmAppointmentForm({ appointment }) {
                             rows="3"
                             value={data.counsellor_notes}
                             onChange={(event) =>
-                                setData("counsellor_notes", event.target.value)
+                                setData(
+                                    "counsellor_notes",
+                                    event.target.value,
+                                )
                             }
                             placeholder="Optional notes for the client."
                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -179,6 +182,101 @@ function ConfirmAppointmentForm({ appointment }) {
 
                         <PrimaryButton disabled={processing}>
                             Confirm
+                        </PrimaryButton>
+                    </div>
+                </form>
+            )}
+        </div>
+    );
+}
+
+function AppointmentOutcomeForm({ appointment, type }) {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const { data, setData, patch, processing, errors, reset } = useForm({
+        counsellor_notes: appointment.counsellor_notes ?? "",
+    });
+
+    const isComplete = type === "complete";
+    const canSubmit = isComplete
+        ? appointment.can_be_completed
+        : appointment.can_be_marked_no_show;
+
+    const routeName = isComplete
+        ? "counsellor.appointments.complete"
+        : "counsellor.appointments.no-show";
+
+    const openLabel = isComplete ? "Mark completed" : "Mark no-show";
+    const submitLabel = isComplete ? "Confirm completed" : "Confirm no-show";
+    const title = isComplete ? "Completion notes" : "No-show notes";
+
+    const submit = (event) => {
+        event.preventDefault();
+
+        patch(route(routeName, appointment.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                reset("counsellor_notes");
+                setIsOpen(false);
+            },
+        });
+    };
+
+    if (!canSubmit) {
+        return (
+            <SecondaryButton type="button" disabled>
+                {openLabel} locked
+            </SecondaryButton>
+        );
+    }
+
+    return (
+        <div className="w-full sm:w-auto">
+            {!isOpen ? (
+                <SecondaryButton type="button" onClick={() => setIsOpen(true)}>
+                    {openLabel}
+                </SecondaryButton>
+            ) : (
+                <form
+                    onSubmit={submit}
+                    className="mt-3 rounded-lg border border-gray-200 bg-white p-4 sm:min-w-96"
+                >
+                    <label
+                        htmlFor={`${type}_notes_${appointment.id}`}
+                        className="text-sm font-medium text-gray-700"
+                    >
+                        {title}
+                    </label>
+
+                    <textarea
+                        id={`${type}_notes_${appointment.id}`}
+                        rows="3"
+                        value={data.counsellor_notes}
+                        onChange={(event) =>
+                            setData("counsellor_notes", event.target.value)
+                        }
+                        placeholder="Optional notes for the appointment record."
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+
+                    <InputError
+                        message={errors.counsellor_notes || errors.appointment}
+                        className="mt-2"
+                    />
+
+                    <div className="mt-4 flex flex-wrap justify-end gap-3">
+                        <SecondaryButton
+                            type="button"
+                            onClick={() => {
+                                reset("counsellor_notes");
+                                setIsOpen(false);
+                            }}
+                        >
+                            Not now
+                        </SecondaryButton>
+
+                        <PrimaryButton disabled={processing}>
+                            {submitLabel}
                         </PrimaryButton>
                     </div>
                 </form>
@@ -314,13 +412,25 @@ function AppointmentCard({ appointment }) {
                 </div>
             )}
 
-            <div className="flex flex-col gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex flex-col gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4">
                 <p className="text-sm text-gray-600">
-                    Confirmation will update status history and prepare the
-                    reminder hook.
+                    Pending appointments can be confirmed. Confirmed
+                    appointments can be closed as completed or no-show.
                 </p>
 
-                <ConfirmAppointmentForm appointment={appointment} />
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-end">
+                    <ConfirmAppointmentForm appointment={appointment} />
+
+                    <AppointmentOutcomeForm
+                        appointment={appointment}
+                        type="complete"
+                    />
+
+                    <AppointmentOutcomeForm
+                        appointment={appointment}
+                        type="no_show"
+                    />
+                </div>
             </div>
         </div>
     );
@@ -361,8 +471,8 @@ export default function Index({ appointments, filters, options }) {
                         Counsellor Appointments
                     </h2>
                     <p className="mt-1 text-sm text-gray-500">
-                        Review client appointment requests and confirm pending
-                        sessions.
+                        Review client appointment requests, confirm sessions,
+                        and close completed or no-show appointments.
                     </p>
                 </div>
             }
@@ -373,10 +483,10 @@ export default function Index({ appointments, filters, options }) {
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
                     <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4">
                         <p className="text-sm text-indigo-900">
-                            Pending appointments need confirmation. Online
-                            appointments require a meeting link. In-person
-                            appointments require a location. Simple, which is
-                            why computers need sixteen files to enforce it.
+                            Pending appointments need confirmation. Confirmed
+                            appointments can later be marked as completed or
+                            no-show. Status discipline: boring, necessary, and
+                            tragically rare.
                         </p>
                     </div>
 
