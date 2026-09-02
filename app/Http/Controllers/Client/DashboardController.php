@@ -3,36 +3,31 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Models\ClientProfile;
+use App\Services\Appointments\AppointmentDashboardMetricService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
-    {
-        $clientProfile = $request->user()
-            ->clientProfile()
-            ->with([
-                'emergencyContacts',
-                'preference',
-            ])
-            ->first();
+    public function __invoke(
+        Request $request,
+        AppointmentDashboardMetricService $appointmentMetrics
+    ): Response {
+        return $this->index($request, $appointmentMetrics);
+    }
+
+    public function index(
+        Request $request,
+        AppointmentDashboardMetricService $appointmentMetrics
+    ): Response {
+        $clientProfile = ClientProfile::query()
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
 
         return Inertia::render('Client/Dashboard', [
-            'clientProfile' => $clientProfile
-                ? [
-                    'id' => $clientProfile->id,
-                    'first_name' => $clientProfile->first_name,
-                    'last_name' => $clientProfile->last_name,
-                    'preferred_name' => $clientProfile->preferred_name,
-                    'status' => $clientProfile->status,
-                    'profile_completed_at' => $clientProfile->profile_completed_at?->toISOString(),
-                    'missing_fields' => $clientProfile->completionMissingFields(),
-                    'emergency_contacts_count' => $clientProfile->emergencyContacts->count(),
-                    'has_preferences' => $clientProfile->preference !== null,
-                ]
-                : null,
+            'appointmentMetrics' => $appointmentMetrics->forClient($clientProfile),
         ]);
     }
 }

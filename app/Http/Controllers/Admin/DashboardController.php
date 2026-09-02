@@ -3,30 +3,26 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Services\Appointments\AppointmentDashboardMetricService;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function __invoke(): Response
-    {
-        return Inertia::render(
-            'Admin/Dashboard',
-            [
-                'stats' => [
-                    'activeUsers' => User::query()
-                        ->where('is_active', true)
-                        ->count(),
+    public function __invoke(
+        Request $request,
+        AppointmentDashboardMetricService $appointmentMetrics
+    ): Response {
+        return $this->index($request, $appointmentMetrics);
+    }
 
-                    'counsellors' => User::role(
-                        'counsellor'
-                    )->count(),
-
-                    'todayAppointments' => 0,
-                    'pendingPayments' => 0,
-                ],
-            ]
-        );
+    public function index(
+        Request $request,
+        AppointmentDashboardMetricService $appointmentMetrics
+    ): Response {
+        return Inertia::render('Admin/Dashboard', [
+            'appointmentMetrics' => $appointmentMetrics->admin(),
+        ]);
     }
 }

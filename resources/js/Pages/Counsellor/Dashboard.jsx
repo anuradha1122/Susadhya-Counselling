@@ -1,66 +1,73 @@
-import StatCard from '@/Components/StatCard';
-import CounsellorLayout from '@/Layouts/CounsellorLayout';
-import { Head } from '@inertiajs/react';
-import {
-    CalendarCheck2,
-    CalendarDays,
-    CircleDollarSign,
-    Clock3,
-} from 'lucide-react';
+import AppointmentMetricGrid from "@/Components/Appointments/AppointmentMetricGrid";
+import PrimaryButton from "@/Components/PrimaryButton";
+import SecondaryButton from "@/Components/SecondaryButton";
+import CounsellorLayout from "@/Layouts/CounsellorLayout";
+import { Head, Link } from "@inertiajs/react";
 
-export default function Dashboard({
-    stats,
-}) {
+export default function Dashboard({ appointmentMetrics }) {
     return (
-        <CounsellorLayout title="Counsellor Dashboard">
+        <CounsellorLayout
+            header={
+                <div>
+                    <h2 className="text-xl font-semibold leading-tight text-gray-800">
+                        Counsellor Dashboard
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-500">
+                        Appointment requests, confirmed sessions, and
+                        counselling workflow summary.
+                    </p>
+                </div>
+            }
+        >
             <Head title="Counsellor Dashboard" />
 
-            <section className="mb-6 rounded-3xl bg-gradient-to-r from-teal-700 to-emerald-600 p-6 text-white shadow-lg sm:p-8">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-100">
-                    My workspace
-                </p>
+            <div className="py-12">
+                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
+                    <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-5">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                            <div>
+                                <h3 className="text-base font-semibold text-indigo-950">
+                                    Counsellor Appointment Workbench
+                                </h3>
+                                <p className="mt-1 text-sm text-indigo-900">
+                                    Review appointment requests, confirm
+                                    sessions, and close completed or no-show
+                                    appointments without needing a separate
+                                    spreadsheet shrine.
+                                </p>
+                            </div>
 
-                <h2 className="mt-2 text-2xl font-bold sm:text-3xl">
-                    Your counselling schedule at a glance
-                </h2>
+                            <div className="flex flex-wrap gap-3">
+                                <Link
+                                    href={route(
+                                        "counsellor.availability.index",
+                                    )}
+                                >
+                                    <SecondaryButton type="button">
+                                        My availability
+                                    </SecondaryButton>
+                                </Link>
 
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-teal-50 sm:text-base">
-                    Availability and appointment tools will
-                    appear here as the operational modules
-                    are completed.
-                </p>
-            </section>
+                                <Link
+                                    href={route(
+                                        "counsellor.appointments.index",
+                                    )}
+                                >
+                                    <PrimaryButton type="button">
+                                        My appointments
+                                    </PrimaryButton>
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
 
-            <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <StatCard
-                    title="Today's appointments"
-                    value={stats.todayAppointments}
-                    icon={CalendarDays}
-                />
-
-                <StatCard
-                    title="Upcoming"
-                    value={stats.upcomingAppointments}
-                    icon={Clock3}
-                    tone="blue"
-                />
-
-                <StatCard
-                    title="Completed"
-                    value={stats.completedAppointments}
-                    icon={CalendarCheck2}
-                    tone="violet"
-                />
-
-                <StatCard
-                    title="Monthly earnings"
-                    value={`LKR ${Number(
-                        stats.monthlyEarnings
-                    ).toLocaleString()}`}
-                    icon={CircleDollarSign}
-                    tone="amber"
-                />
-            </section>
+                    <AppointmentMetricGrid
+                        metrics={appointmentMetrics}
+                        title="My Appointment Metrics"
+                        description="Counts for appointments assigned to your counsellor profile."
+                    />
+                </div>
+            </div>
         </CounsellorLayout>
     );
 }
