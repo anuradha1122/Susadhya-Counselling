@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\ClientController as AdminClientController;
 use App\Http\Controllers\Admin\CounsellingServiceController;
 use App\Http\Controllers\Admin\CounsellorController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\DocumentController as AdminDocumentController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ServiceCategoryController;
 use App\Http\Controllers\Admin\SessionController as AdminSessionController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\Client\AppointmentController as ClientAppointmentContro
 use App\Http\Controllers\Client\AppointmentSlotController as ClientAppointmentSlotController;
 use App\Http\Controllers\Client\CounsellorDiscoveryController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
+use App\Http\Controllers\Client\DocumentController as ClientDocumentController;
 use App\Http\Controllers\Client\EmergencyContactController as ClientEmergencyContactController;
 use App\Http\Controllers\Client\IntakeController as ClientIntakeController;
 use App\Http\Controllers\Client\PreferenceController as ClientPreferenceController;
@@ -21,12 +23,14 @@ use App\Http\Controllers\Client\PrivacySettingsController as ClientPrivacySettin
 use App\Http\Controllers\Client\ProfileController as ClientProfileController;
 use App\Http\Controllers\Client\SessionController as ClientSessionController;
 use App\Http\Controllers\ClinicalSupervisor\CaseController as ClinicalSupervisorCaseController;
+use App\Http\Controllers\ClinicalSupervisor\DocumentController as ClinicalSupervisorDocumentController;
 use App\Http\Controllers\Counsellor\AppointmentController as CounsellorAppointmentController;
 use App\Http\Controllers\Counsellor\AvailabilityBreakController as CounsellorAvailabilityBreakController;
 use App\Http\Controllers\Counsellor\AvailabilityController as CounsellorAvailabilityController;
 use App\Http\Controllers\Counsellor\BlockedSlotController as CounsellorBlockedSlotController;
 use App\Http\Controllers\Counsellor\CaseController as CounsellorCaseController;
 use App\Http\Controllers\Counsellor\DashboardController as CounsellorDashboardController;
+use App\Http\Controllers\Counsellor\DocumentController as CounsellorDocumentController;
 use App\Http\Controllers\Counsellor\LeaveDayController as CounsellorLeaveDayController;
 use App\Http\Controllers\Counsellor\SessionController as CounsellorSessionController;
 use App\Http\Controllers\DashboardRedirectController;
@@ -129,6 +133,50 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::patch('/sessions/{session}/review', [AdminSessionController::class, 'updateReview'])
                 ->name('sessions.review');
+
+            Route::middleware(
+                'permission:documents.admin.manage'
+            )->group(function (): void {
+                Route::get(
+                    '/documents',
+                    [
+                        AdminDocumentController::class,
+                        'index',
+                    ]
+                )->name(
+                    'documents.index'
+                );
+
+                Route::post(
+                    '/documents',
+                    [
+                        AdminDocumentController::class,
+                        'store',
+                    ]
+                )->name(
+                    'documents.store'
+                );
+
+                Route::get(
+                    '/documents/{document}/download',
+                    [
+                        AdminDocumentController::class,
+                        'download',
+                    ]
+                )->name(
+                    'documents.download'
+                );
+
+                Route::delete(
+                    '/documents/{document}',
+                    [
+                        AdminDocumentController::class,
+                        'destroy',
+                    ]
+                )->name(
+                    'documents.destroy'
+                );
+            });
         });
 
     Route::prefix('counsellor')
@@ -277,6 +325,50 @@ Route::middleware(['auth', 'active'])->group(function () {
                     )->name('cases.notes.versions');
                 });
 
+            Route::middleware(
+                'permission:documents.case.manage'
+            )->group(function (): void {
+                Route::get(
+                    '/documents',
+                    [
+                        CounsellorDocumentController::class,
+                        'index',
+                    ]
+                )->name(
+                    'documents.index'
+                );
+
+                Route::post(
+                    '/cases/{case}/documents',
+                    [
+                        CounsellorDocumentController::class,
+                        'store',
+                    ]
+                )->name(
+                    'documents.store'
+                );
+
+                Route::get(
+                    '/documents/{document}/download',
+                    [
+                        CounsellorDocumentController::class,
+                        'download',
+                    ]
+                )->name(
+                    'documents.download'
+                );
+
+                Route::delete(
+                    '/documents/{document}',
+                    [
+                        CounsellorDocumentController::class,
+                        'destroy',
+                    ]
+                )->name(
+                    'documents.destroy'
+                );
+            });
+
         });
 
     Route::prefix('client')
@@ -376,6 +468,50 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('/sessions', [ClientSessionController::class, 'index'])
                 ->name('sessions.index');
 
+            Route::middleware(
+                'permission:documents.client.manage'
+            )->group(function (): void {
+                Route::get(
+                    '/documents',
+                    [
+                        ClientDocumentController::class,
+                        'index',
+                    ]
+                )->name(
+                    'documents.index'
+                );
+
+                Route::post(
+                    '/documents',
+                    [
+                        ClientDocumentController::class,
+                        'store',
+                    ]
+                )->name(
+                    'documents.store'
+                );
+
+                Route::get(
+                    '/documents/{document}/download',
+                    [
+                        ClientDocumentController::class,
+                        'download',
+                    ]
+                )->name(
+                    'documents.download'
+                );
+
+                Route::delete(
+                    '/documents/{document}',
+                    [
+                        ClientDocumentController::class,
+                        'destroy',
+                    ]
+                )->name(
+                    'documents.destroy'
+                );
+            });
+
         });
 
     Route::middleware([
@@ -408,6 +544,30 @@ Route::middleware(['auth', 'active'])->group(function () {
                     'noteVersions',
                 ]
             )->name('cases.notes.versions');
+
+            Route::middleware(
+                'permission:documents.case.review'
+            )->group(function (): void {
+                Route::get(
+                    '/documents',
+                    [
+                        ClinicalSupervisorDocumentController::class,
+                        'index',
+                    ]
+                )->name(
+                    'documents.index'
+                );
+
+                Route::get(
+                    '/documents/{document}/download',
+                    [
+                        ClinicalSupervisorDocumentController::class,
+                        'download',
+                    ]
+                )->name(
+                    'documents.download'
+                );
+            });
         });
 
     Route::get('/profile', [

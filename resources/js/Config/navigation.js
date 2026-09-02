@@ -2,21 +2,22 @@ import {
     BriefcaseBusiness,
     BriefcaseMedical,
     CalendarDays,
+    CircleDollarSign,
     ClipboardList,
     ClipboardPenLine,
-    CircleDollarSign,
     Clock3,
     FileClock,
+    FileText,
     HeartHandshake,
     KeyRound,
     LayoutDashboard,
+    Search,
     Settings,
     ShieldCheck,
     Stethoscope,
     Tags,
     UserRoundCog,
     Users,
-    Search,
 } from "lucide-react";
 
 export const adminNavigation = [
@@ -81,6 +82,20 @@ export const adminNavigation = [
         routeName: "clinical-supervisor.cases.index",
         icon: BriefcaseMedical,
         permission: "clinical.records.review",
+    },
+
+    // M13 — Documents & Secure Files
+    {
+        label: "Clinical Documents",
+        routeName: "clinical-supervisor.documents.index",
+        icon: FileText,
+        permission: "documents.case.review",
+    },
+    {
+        label: "Documents",
+        routeName: "admin.documents.index",
+        icon: FileText,
+        permission: "documents.admin.manage",
     },
 
     {
@@ -151,6 +166,14 @@ export const counsellorNavigation = [
         icon: BriefcaseMedical,
         permission: "clinical.records.manage",
     },
+
+    // M13 — Documents & Secure Files
+    {
+        label: "Documents",
+        routeName: "counsellor.documents.index",
+        icon: FileText,
+        permission: "documents.case.manage",
+    },
 ];
 
 export const clientNavigation = [
@@ -208,6 +231,15 @@ export const clientNavigation = [
         icon: ClipboardPenLine,
         permission: "dashboard.client.view",
     },
+
+    // M13 — Documents & Secure Files
+    {
+        label: "My Documents",
+        routeName: "client.documents.index",
+        icon: FileText,
+        permission: "documents.client.manage",
+    },
+
     {
         label: "Payments",
         icon: CircleDollarSign,

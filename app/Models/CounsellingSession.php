@@ -175,4 +175,11 @@ class CounsellingSession extends Model
     {
         return $this->hasMany(ClinicalNote::class);
     }
+
+    public function secureDocuments(): HasMany
+    {
+        return $this->hasMany(
+            SecureDocument::class
+        );
+    }
 }

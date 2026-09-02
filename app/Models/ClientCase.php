@@ -112,4 +112,11 @@ class ClientCase extends Model
     {
         return $this->status === self::STATUS_CLOSED;
     }
+
+    public function secureDocuments(): HasMany
+    {
+        return $this->hasMany(
+            SecureDocument::class
+        );
+    }
 }

@@ -210,4 +210,11 @@ class ClientProfile extends Model
     {
         return $this->hasMany(ClientCase::class);
     }
+
+    public function secureDocuments(): HasMany
+    {
+        return $this->hasMany(
+            SecureDocument::class
+        );
+    }
 }

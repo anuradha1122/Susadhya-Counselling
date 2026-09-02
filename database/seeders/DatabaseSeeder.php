@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             SuperAdminSeeder::class,
             CounsellorReferenceSeeder::class,
             ClinicalRecordPermissionSeeder::class,
+            DocumentPermissionSeeder::class,
         ]);
     }
 }
