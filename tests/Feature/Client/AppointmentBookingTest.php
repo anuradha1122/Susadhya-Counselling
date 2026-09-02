@@ -135,12 +135,12 @@ it('allows a client to request an available appointment slot', function (): void
             date: $date
         ));
 
-    $response->assertRedirect(route('client.counsellors.show', $counsellorProfile->id));
+    $response->assertRedirect(route('client.appointments.index'));
 
     $this->assertDatabaseHas('appointments', [
         'client_profile_id' => $clientProfile->id,
         'counsellor_profile_id' => $counsellorProfile->id,
-        'appointment_date' => $date,
+        'appointment_date' => $date.' 00:00:00',
         'start_time' => '09:00',
         'end_time' => '10:00',
         'mode' => Appointment::MODE_ONLINE,

@@ -223,6 +223,9 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('/counsellors/{counsellor}/appointment-slots', [ClientAppointmentSlotController::class, 'index'])
                 ->name('counsellors.appointment-slots.index');
 
+            Route::get('/appointments', [ClientAppointmentController::class, 'index'])
+                ->name('appointments.index');
+
             Route::post('/appointments', [ClientAppointmentController::class, 'store'])
                 ->name('appointments.store');
 

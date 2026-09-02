@@ -121,6 +121,12 @@ export const clientNavigation = [
         permission: "dashboard.client.view",
     },
     {
+        label: "My Appointments",
+        routeName: "client.appointments.index",
+        icon: CalendarDays,
+        permission: "dashboard.client.view",
+    },
+    {
         label: "Client Profile",
         routeName: "client.profile.show",
         icon: UserRoundCog,
