@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\CancelAppointmentRequest;
+use App\Http\Requests\Client\RescheduleAppointmentRequest;
+use App\Http\Requests\Client\RescheduleAppointmentSlotRequest;
 use App\Http\Requests\Client\StoreAppointmentRequest;
 use App\Models\Appointment;
 use App\Models\ClientProfile;
 use App\Models\CounsellorProfile;
 use App\Services\Appointments\AppointmentSlotService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -123,7 +126,7 @@ class AppointmentController extends Controller
             })
             ->firstOrFail();
 
-        $appointment = DB::transaction(function () use (
+        DB::transaction(function () use (
             $request,
             $validated,
             $clientProfile,
@@ -182,6 +185,147 @@ class AppointmentController extends Controller
             ->with('success', 'Appointment request submitted successfully.');
     }
 
+    public function rescheduleSlots(
+        RescheduleAppointmentSlotRequest $request,
+        Appointment $appointment,
+        AppointmentSlotService $slotService
+    ): JsonResponse {
+        $validated = $request->validated();
+
+        $clientProfile = ClientProfile::query()
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        abort_unless($appointment->client_profile_id === $clientProfile->id, 404);
+
+        if (! $appointment->canBeRescheduled()) {
+            throw ValidationException::withMessages([
+                'appointment' => 'This appointment cannot be rescheduled.',
+            ]);
+        }
+
+        $counsellorProfile = $this->activeCounsellorProfileForAppointment($appointment);
+
+        $slots = $slotService->availableSlotsForDate(
+            counsellorProfile: $counsellorProfile,
+            date: $validated['appointment_date'],
+            clientProfile: $clientProfile,
+            mode: $validated['mode'],
+            ignoreAppointmentId: $appointment->id
+        );
+
+        return response()->json([
+            'appointment_id' => $appointment->id,
+            'counsellor_profile_id' => $counsellorProfile->id,
+            'appointment_date' => $validated['appointment_date'],
+            'mode' => $validated['mode'],
+            'slots' => $slots->values(),
+        ]);
+    }
+
+    public function reschedule(
+        RescheduleAppointmentRequest $request,
+        Appointment $appointment,
+        AppointmentSlotService $slotService
+    ): RedirectResponse {
+        $validated = $request->validated();
+
+        $clientProfile = ClientProfile::query()
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        abort_unless($appointment->client_profile_id === $clientProfile->id, 404);
+
+        if (! $appointment->canBeRescheduled()) {
+            throw ValidationException::withMessages([
+                'appointment' => 'This appointment cannot be rescheduled.',
+            ]);
+        }
+
+        $counsellorProfile = $this->activeCounsellorProfileForAppointment($appointment);
+
+        DB::transaction(function () use (
+            $appointment,
+            $request,
+            $validated,
+            $clientProfile,
+            $counsellorProfile,
+            $slotService
+        ): void {
+            $isAvailable = $slotService->isSlotAvailable(
+                counsellorProfile: $counsellorProfile,
+                date: $validated['appointment_date'],
+                startTime: $validated['start_time'],
+                endTime: $validated['end_time'],
+                clientProfile: $clientProfile,
+                mode: $validated['mode'],
+                ignoreAppointmentId: $appointment->id
+            );
+
+            if (! $isAvailable) {
+                throw ValidationException::withMessages([
+                    'start_time' => 'The selected reschedule slot is no longer available.',
+                ]);
+            }
+
+            $fromStatus = $appointment->status;
+
+            $appointment->forceFill([
+                'status' => Appointment::STATUS_RESCHEDULED,
+                'updated_by' => $request->user()->id,
+            ])->save();
+
+            $appointment->statusHistories()->create([
+                'from_status' => $fromStatus,
+                'to_status' => Appointment::STATUS_RESCHEDULED,
+                'reason' => 'Appointment rescheduled by client.',
+                'metadata' => [
+                    'source' => 'client_reschedule_original',
+                    'new_appointment_date' => $validated['appointment_date'],
+                    'new_start_time' => $validated['start_time'],
+                    'new_end_time' => $validated['end_time'],
+                    'new_mode' => $validated['mode'],
+                ],
+                'changed_by' => $request->user()->id,
+            ]);
+
+            $newAppointment = Appointment::query()->create([
+                'client_profile_id' => $clientProfile->id,
+                'counsellor_profile_id' => $counsellorProfile->id,
+                'counselling_service_id' => $appointment->counselling_service_id,
+                'appointment_date' => $validated['appointment_date'],
+                'start_time' => $validated['start_time'],
+                'end_time' => $validated['end_time'],
+                'timezone' => $appointment->timezone,
+                'mode' => $validated['mode'],
+                'status' => Appointment::STATUS_PENDING,
+                'client_notes' => $validated['client_notes'] ?? $appointment->client_notes,
+                'rescheduled_from_appointment_id' => $appointment->id,
+                'created_by' => $request->user()->id,
+                'updated_by' => $request->user()->id,
+            ]);
+
+            $newAppointment->statusHistories()->create([
+                'from_status' => null,
+                'to_status' => Appointment::STATUS_PENDING,
+                'reason' => 'Rescheduled appointment requested by client.',
+                'metadata' => [
+                    'source' => 'client_reschedule_new',
+                    'rescheduled_from_appointment_id' => $appointment->id,
+                    'appointment_date' => $newAppointment->appointment_date?->toDateString(),
+                    'start_time' => $newAppointment->start_time?->format('H:i'),
+                    'end_time' => $newAppointment->end_time?->format('H:i'),
+                    'mode' => $newAppointment->mode,
+                ],
+                'changed_by' => $request->user()->id,
+            ]);
+        });
+
+        return redirect()
+            ->route('client.appointments.index')
+            ->with('success', 'Appointment reschedule request submitted successfully.');
+    }
+
     public function cancel(
         CancelAppointmentRequest $request,
         Appointment $appointment
@@ -231,6 +375,17 @@ class AppointmentController extends Controller
             ->with('success', 'Appointment cancelled successfully.');
     }
 
+    private function activeCounsellorProfileForAppointment(Appointment $appointment): CounsellorProfile
+    {
+        return CounsellorProfile::query()
+            ->whereKey($appointment->counsellor_profile_id)
+            ->where('status', 'active')
+            ->whereHas('user', function ($query): void {
+                $query->where('is_active', true);
+            })
+            ->firstOrFail();
+    }
+
     private function appointmentPayload(Appointment $appointment): array
     {
         return [
@@ -250,6 +405,7 @@ class AppointmentController extends Controller
             'cancelled_at' => $appointment->cancelled_at?->toDateTimeString(),
             'can_be_cancelled' => $appointment->canBeCancelled(),
             'can_be_rescheduled' => $appointment->canBeRescheduled(),
+            'rescheduled_from_appointment_id' => $appointment->rescheduled_from_appointment_id,
             'counsellor' => [
                 'id' => $appointment->counsellorProfile?->id,
                 'name' => $appointment->counsellorProfile?->user?->name,

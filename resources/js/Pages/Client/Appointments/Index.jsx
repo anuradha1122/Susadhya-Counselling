@@ -4,7 +4,7 @@ import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
 import ClientLayout from "@/Layouts/ClientLayout";
 import { Head, Link, router, useForm } from "@inertiajs/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function formatValue(value) {
     if (value === null || value === undefined || value === "") {
@@ -14,6 +14,13 @@ function formatValue(value) {
     return String(value)
         .replaceAll("_", " ")
         .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function todayForInput() {
+    const now = new Date();
+    const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+
+    return localDate.toISOString().slice(0, 10);
 }
 
 function statusClasses(status) {
@@ -129,6 +136,294 @@ function CancelAppointmentForm({ appointment }) {
     );
 }
 
+function RescheduleAppointmentForm({ appointment }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [slots, setSlots] = useState([]);
+    const [loadingSlots, setLoadingSlots] = useState(false);
+    const [slotError, setSlotError] = useState("");
+
+    const { data, setData, patch, processing, errors, reset } = useForm({
+        appointment_date: appointment.appointment_date ?? todayForInput(),
+        start_time: "",
+        end_time: "",
+        mode: appointment.mode ?? "online",
+        client_notes: appointment.client_notes ?? "",
+    });
+
+    useEffect(() => {
+        if (!isOpen || !data.appointment_date || !data.mode) {
+            setSlots([]);
+            return;
+        }
+
+        const controller = new AbortController();
+
+        setLoadingSlots(true);
+        setSlotError("");
+        setData("start_time", "");
+        setData("end_time", "");
+
+        const parameters = new URLSearchParams({
+            appointment_date: data.appointment_date,
+            mode: data.mode,
+        });
+
+        fetch(
+            `${route(
+                "client.appointments.reschedule-slots",
+                appointment.id,
+            )}?${parameters.toString()}`,
+            {
+                headers: {
+                    Accept: "application/json",
+                },
+                signal: controller.signal,
+            },
+        )
+            .then(async (response) => {
+                if (!response.ok) {
+                    throw new Error("Unable to load reschedule slots.");
+                }
+
+                return response.json();
+            })
+            .then((payload) => {
+                setSlots(payload.slots ?? []);
+            })
+            .catch((error) => {
+                if (error.name === "AbortError") {
+                    return;
+                }
+
+                setSlots([]);
+                setSlotError(
+                    "Available reschedule slots could not be loaded. Please try another date or mode.",
+                );
+            })
+            .finally(() => {
+                setLoadingSlots(false);
+            });
+
+        return () => controller.abort();
+    }, [appointment.id, data.appointment_date, data.mode, isOpen]);
+
+    const selectSlot = (slot) => {
+        setData("start_time", slot.start_time);
+        setData("end_time", slot.end_time);
+    };
+
+    const submit = (event) => {
+        event.preventDefault();
+
+        patch(route("client.appointments.reschedule", appointment.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                reset("start_time", "end_time");
+                setIsOpen(false);
+            },
+        });
+    };
+
+    if (!appointment.can_be_rescheduled) {
+        return (
+            <SecondaryButton type="button" disabled>
+                Cannot reschedule
+            </SecondaryButton>
+        );
+    }
+
+    return (
+        <div className="w-full sm:w-auto">
+            {!isOpen ? (
+                <SecondaryButton type="button" onClick={() => setIsOpen(true)}>
+                    Reschedule appointment
+                </SecondaryButton>
+            ) : (
+                <form
+                    onSubmit={submit}
+                    className="mt-3 rounded-lg border border-indigo-100 bg-white p-4 sm:min-w-96"
+                >
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label
+                                htmlFor={`reschedule_date_${appointment.id}`}
+                                className="text-sm font-medium text-gray-700"
+                            >
+                                New date
+                            </label>
+
+                            <input
+                                id={`reschedule_date_${appointment.id}`}
+                                type="date"
+                                min={todayForInput()}
+                                value={data.appointment_date}
+                                onChange={(event) =>
+                                    setData(
+                                        "appointment_date",
+                                        event.target.value,
+                                    )
+                                }
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            />
+
+                            <InputError
+                                message={errors.appointment_date}
+                                className="mt-2"
+                            />
+                        </div>
+
+                        <div>
+                            <label
+                                htmlFor={`reschedule_mode_${appointment.id}`}
+                                className="text-sm font-medium text-gray-700"
+                            >
+                                Mode
+                            </label>
+
+                            <select
+                                id={`reschedule_mode_${appointment.id}`}
+                                value={data.mode}
+                                onChange={(event) =>
+                                    setData("mode", event.target.value)
+                                }
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            >
+                                <option value="online">Online</option>
+                                <option value="in_person">In person</option>
+                            </select>
+
+                            <InputError
+                                message={errors.mode}
+                                className="mt-2"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mt-4">
+                        <div className="flex items-center justify-between gap-4">
+                            <p className="text-sm font-medium text-gray-700">
+                                New available slots
+                            </p>
+
+                            {loadingSlots && (
+                                <p className="text-xs text-gray-500">
+                                    Loading slots...
+                                </p>
+                            )}
+                        </div>
+
+                        {slotError && (
+                            <div className="mt-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                                {slotError}
+                            </div>
+                        )}
+
+                        {!loadingSlots && slots.length === 0 && !slotError && (
+                            <div className="mt-2 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600">
+                                No available reschedule slots for this date and
+                                mode. Time remains annoying.
+                            </div>
+                        )}
+
+                        {slots.length > 0 && (
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                {slots.map((slot) => {
+                                    const selected =
+                                        data.start_time === slot.start_time &&
+                                        data.end_time === slot.end_time;
+
+                                    return (
+                                        <button
+                                            key={`${slot.date}-${slot.start_time}-${slot.end_time}`}
+                                            type="button"
+                                            onClick={() => selectSlot(slot)}
+                                            className={`rounded-lg border p-4 text-left transition ${
+                                                selected
+                                                    ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100"
+                                                    : "border-gray-200 bg-white hover:border-indigo-300 hover:bg-indigo-50"
+                                            }`}
+                                        >
+                                            <p className="font-semibold text-gray-900">
+                                                {slot.start_time} -{" "}
+                                                {slot.end_time}
+                                            </p>
+
+                                            <p className="mt-1 text-xs text-gray-500">
+                                                {formatValue(slot.mode)} ·{" "}
+                                                {slot.timezone}
+                                            </p>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        <InputError
+                            message={errors.start_time || errors.end_time}
+                            className="mt-2"
+                        />
+                        <InputError
+                            message={errors.appointment}
+                            className="mt-2"
+                        />
+                    </div>
+
+                    <div className="mt-4">
+                        <label
+                            htmlFor={`reschedule_notes_${appointment.id}`}
+                            className="text-sm font-medium text-gray-700"
+                        >
+                            Notes
+                        </label>
+
+                        <textarea
+                            id={`reschedule_notes_${appointment.id}`}
+                            rows="3"
+                            value={data.client_notes}
+                            onChange={(event) =>
+                                setData("client_notes", event.target.value)
+                            }
+                            placeholder="Optional note for the counsellor."
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        />
+
+                        <InputError
+                            message={errors.client_notes}
+                            className="mt-2"
+                        />
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap justify-end gap-3">
+                        <SecondaryButton
+                            type="button"
+                            onClick={() => {
+                                reset(
+                                    "appointment_date",
+                                    "start_time",
+                                    "end_time",
+                                    "mode",
+                                    "client_notes",
+                                );
+                                setIsOpen(false);
+                            }}
+                        >
+                            Keep current time
+                        </SecondaryButton>
+
+                        <PrimaryButton
+                            disabled={
+                                processing || !data.start_time || !data.end_time
+                            }
+                        >
+                            Confirm reschedule
+                        </PrimaryButton>
+                    </div>
+                </form>
+            )}
+        </div>
+    );
+}
+
 function AppointmentCard({ appointment }) {
     return (
         <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
@@ -148,6 +443,13 @@ function AppointmentCard({ appointment }) {
                                 appointment.counsellor.professional_title,
                             )}
                         </p>
+
+                        {appointment.rescheduled_from_appointment_id && (
+                            <p className="mt-2 text-xs font-medium text-blue-700">
+                                This appointment was created from a reschedule
+                                request.
+                            </p>
+                        )}
                     </div>
 
                     <div className="rounded-lg bg-indigo-50 px-4 py-3 text-sm text-indigo-800">
@@ -254,9 +556,7 @@ function AppointmentCard({ appointment }) {
                 </Link>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                    <SecondaryButton type="button" disabled>
-                        Reschedule soon
-                    </SecondaryButton>
+                    <RescheduleAppointmentForm appointment={appointment} />
 
                     <CancelAppointmentForm appointment={appointment} />
                 </div>
@@ -300,8 +600,8 @@ export default function Index({ appointments, filters, options }) {
                         My Appointments
                     </h2>
                     <p className="mt-1 text-sm text-gray-500">
-                        View your appointment requests, upcoming counselling
-                        sessions, and appointment history.
+                        View, reschedule, and cancel your counselling
+                        appointments.
                     </p>
                 </div>
             }
@@ -312,10 +612,11 @@ export default function Index({ appointments, filters, options }) {
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
                     <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4">
                         <p className="text-sm text-indigo-900">
-                            Pending and confirmed appointments can be cancelled
-                            by the client. Completed or already closed
-                            appointments are locked, because time travel remains
-                            unavailable despite many feature requests.
+                            Pending and confirmed appointments can be
+                            rescheduled or cancelled. A reschedule creates a new
+                            pending appointment and keeps the old appointment as
+                            a history record. Data integrity, that tiny candle
+                            in the software darkness.
                         </p>
                     </div>
 

@@ -20,7 +20,8 @@ class AppointmentSlotService
         CounsellorProfile $counsellorProfile,
         string $date,
         ?ClientProfile $clientProfile = null,
-        ?string $mode = null
+        ?string $mode = null,
+        ?int $ignoreAppointmentId = null
     ): Collection {
         $targetDate = CarbonImmutable::parse($date);
         $dayOfWeek = (int) $targetDate->dayOfWeek;
@@ -51,11 +52,12 @@ class AppointmentSlotService
             ->get();
 
         return $rules
-            ->flatMap(function (CounsellorAvailabilityRule $rule) use ($targetDate, $clientProfile): Collection {
+            ->flatMap(function (CounsellorAvailabilityRule $rule) use ($targetDate, $clientProfile, $ignoreAppointmentId): Collection {
                 return $this->slotsForRule(
                     rule: $rule,
                     targetDate: $targetDate,
-                    clientProfile: $clientProfile
+                    clientProfile: $clientProfile,
+                    ignoreAppointmentId: $ignoreAppointmentId
                 );
             })
             ->values();
@@ -74,40 +76,21 @@ class AppointmentSlotService
             counsellorProfile: $counsellorProfile,
             date: $date,
             clientProfile: $clientProfile,
-            mode: $mode
+            mode: $mode,
+            ignoreAppointmentId: $ignoreAppointmentId
         );
 
-        return $slots->contains(function (array $slot) use (
-            $startTime,
-            $endTime,
-            $ignoreAppointmentId,
-            $clientProfile,
-            $counsellorProfile,
-            $date
-        ): bool {
-            if ($slot['start_time'] !== $startTime || $slot['end_time'] !== $endTime) {
-                return false;
-            }
-
-            if (! $clientProfile) {
-                return true;
-            }
-
-            return ! $this->conflictService->hasAnyConflict(
-                clientProfile: $clientProfile,
-                counsellorProfile: $counsellorProfile,
-                date: $date,
-                startTime: $startTime,
-                endTime: $endTime,
-                ignoreAppointmentId: $ignoreAppointmentId
-            );
+        return $slots->contains(function (array $slot) use ($startTime, $endTime): bool {
+            return $slot['start_time'] === $startTime
+                && $slot['end_time'] === $endTime;
         });
     }
 
     private function slotsForRule(
         CounsellorAvailabilityRule $rule,
         CarbonImmutable $targetDate,
-        ?ClientProfile $clientProfile = null
+        ?ClientProfile $clientProfile = null,
+        ?int $ignoreAppointmentId = null
     ): Collection {
         $date = $targetDate->toDateString();
 
@@ -133,7 +116,7 @@ class AppointmentSlotService
         }
 
         return collect(CarbonPeriod::create($ruleStart, "{$stepMinutes} minutes", $latestStart))
-            ->map(function (CarbonInterface $periodDate) use ($rule, $targetDate, $slotLength, $clientProfile): array {
+            ->map(function (CarbonInterface $periodDate) use ($rule, $targetDate, $slotLength, $clientProfile, $ignoreAppointmentId): array {
                 $slotStart = CarbonImmutable::instance($periodDate);
                 $slotEnd = $slotStart->addMinutes($slotLength);
                 $date = $targetDate->toDateString();
@@ -150,7 +133,8 @@ class AppointmentSlotService
                         date: $date,
                         startTime: $slotStart->format('H:i'),
                         endTime: $slotEnd->format('H:i'),
-                        clientProfile: $clientProfile
+                        clientProfile: $clientProfile,
+                        ignoreAppointmentId: $ignoreAppointmentId
                     ),
                 ];
             })
@@ -164,7 +148,8 @@ class AppointmentSlotService
         string $date,
         string $startTime,
         string $endTime,
-        ?ClientProfile $clientProfile = null
+        ?ClientProfile $clientProfile = null,
+        ?int $ignoreAppointmentId = null
     ): bool {
         $counsellorProfile = $rule->counsellorProfile;
 
@@ -184,7 +169,8 @@ class AppointmentSlotService
             counsellorProfile: $counsellorProfile,
             date: $date,
             startTime: $startTime,
-            endTime: $endTime
+            endTime: $endTime,
+            ignoreAppointmentId: $ignoreAppointmentId
         )) {
             return false;
         }
@@ -193,7 +179,8 @@ class AppointmentSlotService
             clientProfile: $clientProfile,
             date: $date,
             startTime: $startTime,
-            endTime: $endTime
+            endTime: $endTime,
+            ignoreAppointmentId: $ignoreAppointmentId
         )) {
             return false;
         }

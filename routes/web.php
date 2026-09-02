@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AppointmentController as AdminAppointmentController;
 use App\Http\Controllers\Admin\AvailabilityController as AdminAvailabilityController;
 use App\Http\Controllers\Admin\ClientController as AdminClientController;
 use App\Http\Controllers\Admin\CounsellingServiceController;
@@ -8,7 +9,6 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ServiceCategoryController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\AppointmentController as AdminAppointmentController;
 use App\Http\Controllers\Client\AppointmentController as ClientAppointmentController;
 use App\Http\Controllers\Client\AppointmentSlotController as ClientAppointmentSlotController;
 use App\Http\Controllers\Client\CounsellorDiscoveryController;
@@ -248,6 +248,12 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::post('/appointments', [ClientAppointmentController::class, 'store'])
                 ->name('appointments.store');
+
+            Route::get('/appointments/{appointment}/reschedule-slots', [ClientAppointmentController::class, 'rescheduleSlots'])
+                ->name('appointments.reschedule-slots');
+
+            Route::patch('/appointments/{appointment}/reschedule', [ClientAppointmentController::class, 'reschedule'])
+                ->name('appointments.reschedule');
 
             Route::patch('/appointments/{appointment}/cancel', [ClientAppointmentController::class, 'cancel'])
                 ->name('appointments.cancel');
