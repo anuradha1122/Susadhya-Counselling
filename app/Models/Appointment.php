@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
 
 class Appointment extends Model
@@ -299,5 +300,10 @@ class Appointment extends Model
         }
 
         return substr((string) $value, 0, 5);
+    }
+
+    public function counsellingSession(): HasOne
+    {
+        return $this->hasOne(CounsellingSession::class);
     }
 }

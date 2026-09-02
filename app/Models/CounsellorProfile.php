@@ -107,4 +107,9 @@ class CounsellorProfile extends Model
     {
         return $this->hasMany(Appointment::class);
     }
+
+    public function counsellingSessions(): HasMany
+    {
+        return $this->hasMany(CounsellingSession::class);
+    }
 }

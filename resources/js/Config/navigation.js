@@ -2,6 +2,7 @@ import {
     BriefcaseBusiness,
     CalendarDays,
     ClipboardList,
+    ClipboardPenLine,
     CircleDollarSign,
     Clock3,
     FileClock,
@@ -67,6 +68,12 @@ export const adminNavigation = [
         permission: "dashboard.admin.view",
     },
     {
+        label: "Sessions",
+        routeName: "admin.sessions.index",
+        icon: ClipboardPenLine,
+        permission: "dashboard.admin.view",
+    },
+    {
         label: "Payments",
         icon: CircleDollarSign,
         disabled: true,
@@ -120,6 +127,12 @@ export const counsellorNavigation = [
         icon: ClipboardList,
         permission: "dashboard.counsellor.view",
     },
+    {
+        label: "Sessions",
+        routeName: "counsellor.sessions.index",
+        icon: ClipboardPenLine,
+        permission: "dashboard.counsellor.view",
+    },
 ];
 
 export const clientNavigation = [
@@ -169,6 +182,12 @@ export const clientNavigation = [
         label: "Intake Form",
         routeName: "client.intake.edit",
         icon: ClipboardList,
+        permission: "dashboard.client.view",
+    },
+    {
+        label: "My Sessions",
+        routeName: "client.sessions.index",
+        icon: ClipboardPenLine,
         permission: "dashboard.client.view",
     },
     {

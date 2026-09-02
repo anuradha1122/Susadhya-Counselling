@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\CounsellorController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ServiceCategoryController;
+use App\Http\Controllers\Admin\SessionController as AdminSessionController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Client\AppointmentController as ClientAppointmentController;
 use App\Http\Controllers\Client\AppointmentSlotController as ClientAppointmentSlotController;
@@ -18,12 +19,14 @@ use App\Http\Controllers\Client\IntakeController as ClientIntakeController;
 use App\Http\Controllers\Client\PreferenceController as ClientPreferenceController;
 use App\Http\Controllers\Client\PrivacySettingsController as ClientPrivacySettingsController;
 use App\Http\Controllers\Client\ProfileController as ClientProfileController;
+use App\Http\Controllers\Client\SessionController as ClientSessionController;
 use App\Http\Controllers\Counsellor\AppointmentController as CounsellorAppointmentController;
 use App\Http\Controllers\Counsellor\AvailabilityBreakController as CounsellorAvailabilityBreakController;
 use App\Http\Controllers\Counsellor\AvailabilityController as CounsellorAvailabilityController;
 use App\Http\Controllers\Counsellor\BlockedSlotController as CounsellorBlockedSlotController;
 use App\Http\Controllers\Counsellor\DashboardController as CounsellorDashboardController;
 use App\Http\Controllers\Counsellor\LeaveDayController as CounsellorLeaveDayController;
+use App\Http\Controllers\Counsellor\SessionController as CounsellorSessionController;
 use App\Http\Controllers\DashboardRedirectController;
 use App\Http\Controllers\IntakeReviewController;
 use App\Http\Controllers\ProfileController;
@@ -118,6 +121,12 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::patch('/intakes/{intake}/review', [IntakeReviewController::class, 'adminReview'])
                 ->name('intakes.review');
+
+            Route::get('/sessions', [AdminSessionController::class, 'index'])
+                ->name('sessions.index');
+
+            Route::patch('/sessions/{session}/review', [AdminSessionController::class, 'updateReview'])
+                ->name('sessions.review');
         });
 
     Route::prefix('counsellor')
@@ -185,6 +194,19 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::patch('/intakes/{intake}/review', [IntakeReviewController::class, 'counsellorReview'])
                 ->name('intakes.review');
+
+            Route::get('/sessions', [CounsellorSessionController::class, 'index'])
+                ->name('sessions.index');
+
+            Route::post('/sessions/appointments/{appointment}/start', [CounsellorSessionController::class, 'start'])
+                ->name('sessions.start');
+
+            Route::post('/sessions/{session}/notes', [CounsellorSessionController::class, 'storeNote'])
+                ->name('sessions.notes.store');
+
+            Route::patch('/sessions/{session}/complete', [CounsellorSessionController::class, 'complete'])
+                ->name('sessions.complete');
+
         });
 
     Route::prefix('client')
@@ -280,6 +302,9 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::post('/intake/submit', [ClientIntakeController::class, 'submit'])
                 ->name('intake.submit');
+
+            Route::get('/sessions', [ClientSessionController::class, 'index'])
+                ->name('sessions.index');
 
         });
 

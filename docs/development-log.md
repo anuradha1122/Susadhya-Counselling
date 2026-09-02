@@ -123,4 +123,3 @@ Validation and QA:
 - M09 feature tests cover slot generation, booking, listing, cancellation, rescheduling, counsellor workflows, admin oversight, reminders, and dashboard metrics.
 - Vite production build should pass after the final code sections are applied.
 - Final module documentation has been updated in `modules/09-appointments-and-scheduling.md`.
-

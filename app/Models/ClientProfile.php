@@ -200,4 +200,9 @@ class ClientProfile extends Model
     {
         return $this->hasOne(ClientIntake::class);
     }
+
+    public function counsellingSessions(): HasMany
+    {
+        return $this->hasMany(CounsellingSession::class);
+    }
 }
