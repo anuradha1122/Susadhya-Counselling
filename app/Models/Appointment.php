@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class Appointment extends Model
 {
@@ -31,7 +33,6 @@ class Appointment extends Model
     public const STATUS_NO_SHOW = 'no_show';
 
     protected $fillable = [
-        'uuid',
         'client_profile_id',
         'counsellor_profile_id',
         'counselling_service_id',
@@ -56,15 +57,19 @@ class Appointment extends Model
         'updated_by',
     ];
 
-    protected function casts(): array
+    protected $casts = [
+        'appointment_date' => 'date',
+        'start_time' => 'datetime:H:i',
+        'end_time' => 'datetime:H:i',
+        'cancelled_at' => 'datetime',
+        'reminder_scheduled_at' => 'datetime',
+        'reminder_sent_at' => 'datetime',
+    ];
+
+    public function uniqueIds(): array
     {
         return [
-            'appointment_date' => 'date',
-            'start_time' => 'datetime:H:i',
-            'end_time' => 'datetime:H:i',
-            'cancelled_at' => 'datetime',
-            'reminder_scheduled_at' => 'datetime',
-            'reminder_sent_at' => 'datetime',
+            'uuid',
         ];
     }
 
@@ -106,13 +111,6 @@ class Appointment extends Model
         ];
     }
 
-    public function uniqueIds(): array
-    {
-        return [
-            'uuid',
-        ];
-    }
-
     public function clientProfile(): BelongsTo
     {
         return $this->belongsTo(ClientProfile::class);
@@ -135,18 +133,12 @@ class Appointment extends Model
 
     public function rescheduledFromAppointment(): BelongsTo
     {
-        return $this->belongsTo(
-            self::class,
-            'rescheduled_from_appointment_id',
-        );
+        return $this->belongsTo(self::class, 'rescheduled_from_appointment_id');
     }
 
     public function rescheduledAppointments(): HasMany
     {
-        return $this->hasMany(
-            self::class,
-            'rescheduled_from_appointment_id',
-        );
+        return $this->hasMany(self::class, 'rescheduled_from_appointment_id');
     }
 
     public function cancelledBy(): BelongsTo
@@ -174,10 +166,8 @@ class Appointment extends Model
         return $query->where('client_profile_id', $clientProfile->id);
     }
 
-    public function scopeForCounsellorProfile(
-        Builder $query,
-        CounsellorProfile $counsellorProfile
-    ): Builder {
+    public function scopeForCounsellorProfile(Builder $query, CounsellorProfile $counsellorProfile): Builder
+    {
         return $query->where('counsellor_profile_id', $counsellorProfile->id);
     }
 
@@ -188,10 +178,16 @@ class Appointment extends Model
 
     public function scopeUpcoming(Builder $query): Builder
     {
+        return $query->whereDate('appointment_date', '>=', now()->toDateString());
+    }
+
+    public function scopeReminderDue(Builder $query): Builder
+    {
         return $query
-            ->whereDate('appointment_date', '>=', now()->toDateString())
-            ->orderBy('appointment_date')
-            ->orderBy('start_time');
+            ->where('status', self::STATUS_CONFIRMED)
+            ->whereNotNull('reminder_scheduled_at')
+            ->whereNull('reminder_sent_at')
+            ->where('reminder_scheduled_at', '<=', now());
     }
 
     public function isOnline(): bool
@@ -228,5 +224,80 @@ class Appointment extends Model
             self::STATUS_PENDING,
             self::STATUS_CONFIRMED,
         ], true);
+    }
+
+    public function canSendReminder(): bool
+    {
+        return $this->status === self::STATUS_CONFIRMED
+            && $this->reminder_scheduled_at !== null
+            && $this->reminder_sent_at === null
+            && $this->reminder_scheduled_at->lte(now());
+    }
+
+    public function reminderRecipients(): Collection
+    {
+        $this->loadMissing([
+            'clientProfile.user',
+            'counsellorProfile.user',
+        ]);
+
+        return collect([
+            $this->clientProfile?->user,
+            $this->counsellorProfile?->user,
+        ])
+            ->filter(fn (?User $user): bool => $user !== null && (bool) $user->is_active)
+            ->unique('id')
+            ->values();
+    }
+
+    public function markReminderSent(): void
+    {
+        $this->forceFill([
+            'reminder_sent_at' => now(),
+        ])->save();
+    }
+
+    public function startsAt(): ?CarbonImmutable
+    {
+        if (! $this->appointment_date || ! $this->start_time) {
+            return null;
+        }
+
+        return CarbonImmutable::parse(
+            $this->appointment_date->toDateString().' '.$this->formatTime($this->start_time),
+            $this->timezone ?: config('app.timezone')
+        );
+    }
+
+    public function formattedDate(): string
+    {
+        return $this->appointment_date?->format('Y-m-d') ?? 'Not scheduled';
+    }
+
+    public function formattedTimeRange(): string
+    {
+        return trim(($this->formatTime($this->start_time) ?? 'Not set').' - '.($this->formatTime($this->end_time) ?? 'Not set'));
+    }
+
+    public function meetingDetails(): string
+    {
+        if ($this->isOnline()) {
+            return $this->meeting_link ?: 'Meeting link pending';
+        }
+
+        return $this->location ?: 'Location pending';
+    }
+
+    private function formatTime(mixed $value): ?string
+    {
+        if (! $value) {
+            return null;
+        }
+
+        if (method_exists($value, 'format')) {
+            return $value->format('H:i');
+        }
+
+        return substr((string) $value, 0, 5);
     }
 }
