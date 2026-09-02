@@ -195,4 +195,9 @@ class ClientProfile extends Model
     {
         return $this->hasMany(Appointment::class);
     }
+
+    public function intake(): HasOne
+    {
+        return $this->hasOne(ClientIntake::class);
+    }
 }

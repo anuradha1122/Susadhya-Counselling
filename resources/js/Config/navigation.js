@@ -1,6 +1,7 @@
 import {
     BriefcaseBusiness,
     CalendarDays,
+    ClipboardList,
     CircleDollarSign,
     Clock3,
     FileClock,
@@ -60,6 +61,12 @@ export const adminNavigation = [
         permission: "dashboard.admin.view",
     },
     {
+        label: "Client Intakes",
+        routeName: "admin.intakes.index",
+        icon: ClipboardList,
+        permission: "dashboard.admin.view",
+    },
+    {
         label: "Payments",
         icon: CircleDollarSign,
         disabled: true,
@@ -105,6 +112,12 @@ export const counsellorNavigation = [
         label: "My Availability",
         routeName: "counsellor.availability.index",
         icon: Clock3,
+        permission: "dashboard.counsellor.view",
+    },
+    {
+        label: "Client Intakes",
+        routeName: "counsellor.intakes.index",
+        icon: ClipboardList,
         permission: "dashboard.counsellor.view",
     },
 ];
@@ -153,9 +166,10 @@ export const clientNavigation = [
         permission: "dashboard.client.view",
     },
     {
-        label: "Appointments",
-        icon: CalendarDays,
-        disabled: true,
+        label: "Intake Form",
+        routeName: "client.intake.edit",
+        icon: ClipboardList,
+        permission: "dashboard.client.view",
     },
     {
         label: "Payments",
