@@ -20,10 +20,12 @@ use App\Http\Controllers\Client\PreferenceController as ClientPreferenceControll
 use App\Http\Controllers\Client\PrivacySettingsController as ClientPrivacySettingsController;
 use App\Http\Controllers\Client\ProfileController as ClientProfileController;
 use App\Http\Controllers\Client\SessionController as ClientSessionController;
+use App\Http\Controllers\ClinicalSupervisor\CaseController as ClinicalSupervisorCaseController;
 use App\Http\Controllers\Counsellor\AppointmentController as CounsellorAppointmentController;
 use App\Http\Controllers\Counsellor\AvailabilityBreakController as CounsellorAvailabilityBreakController;
 use App\Http\Controllers\Counsellor\AvailabilityController as CounsellorAvailabilityController;
 use App\Http\Controllers\Counsellor\BlockedSlotController as CounsellorBlockedSlotController;
+use App\Http\Controllers\Counsellor\CaseController as CounsellorCaseController;
 use App\Http\Controllers\Counsellor\DashboardController as CounsellorDashboardController;
 use App\Http\Controllers\Counsellor\LeaveDayController as CounsellorLeaveDayController;
 use App\Http\Controllers\Counsellor\SessionController as CounsellorSessionController;
@@ -207,6 +209,74 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::patch('/sessions/{session}/complete', [CounsellorSessionController::class, 'complete'])
                 ->name('sessions.complete');
 
+            Route::middleware('permission:clinical.records.manage')
+                ->group(function () {
+                    Route::get(
+                        '/cases',
+                        [CounsellorCaseController::class, 'index']
+                    )->name('cases.index');
+
+                    Route::post(
+                        '/cases',
+                        [CounsellorCaseController::class, 'store']
+                    )->name('cases.store');
+
+                    Route::get(
+                        '/cases/{case}',
+                        [CounsellorCaseController::class, 'show']
+                    )->name('cases.show');
+
+                    Route::patch(
+                        '/cases/{case}',
+                        [CounsellorCaseController::class, 'update']
+                    )->name('cases.update');
+
+                    Route::patch(
+                        '/cases/{case}/close',
+                        [CounsellorCaseController::class, 'close']
+                    )->name('cases.close');
+
+                    Route::post(
+                        '/cases/{case}/goals',
+                        [CounsellorCaseController::class, 'storeGoal']
+                    )->name('cases.goals.store');
+
+                    Route::patch(
+                        '/cases/{case}/goals/{goal}',
+                        [CounsellorCaseController::class, 'updateGoal']
+                    )->name('cases.goals.update');
+
+                    Route::post(
+                        '/cases/{case}/follow-ups',
+                        [CounsellorCaseController::class, 'storeFollowUp']
+                    )->name('cases.follow-ups.store');
+
+                    Route::patch(
+                        '/cases/{case}/follow-ups/{followUp}',
+                        [CounsellorCaseController::class, 'updateFollowUp']
+                    )->name('cases.follow-ups.update');
+
+                    Route::post(
+                        '/cases/{case}/notes',
+                        [CounsellorCaseController::class, 'storeNote']
+                    )->name('cases.notes.store');
+
+                    Route::patch(
+                        '/cases/{case}/notes/{note}',
+                        [CounsellorCaseController::class, 'updateNote']
+                    )->name('cases.notes.update');
+
+                    Route::patch(
+                        '/cases/{case}/notes/{note}/sign',
+                        [CounsellorCaseController::class, 'signNote']
+                    )->name('cases.notes.sign');
+
+                    Route::get(
+                        '/cases/{case}/notes/{note}/versions',
+                        [CounsellorCaseController::class, 'noteVersions']
+                    )->name('cases.notes.versions');
+                });
+
         });
 
     Route::prefix('client')
@@ -306,6 +376,38 @@ Route::middleware(['auth', 'active'])->group(function () {
             Route::get('/sessions', [ClientSessionController::class, 'index'])
                 ->name('sessions.index');
 
+        });
+
+    Route::middleware([
+        'verified',
+        'permission:clinical.records.review',
+    ])
+        ->prefix('clinical-supervisor')
+        ->name('clinical-supervisor.')
+        ->group(function (): void {
+            Route::get(
+                '/cases',
+                [
+                    ClinicalSupervisorCaseController::class,
+                    'index',
+                ]
+            )->name('cases.index');
+
+            Route::get(
+                '/cases/{case}',
+                [
+                    ClinicalSupervisorCaseController::class,
+                    'show',
+                ]
+            )->name('cases.show');
+
+            Route::get(
+                '/cases/{case}/notes/{note}/versions',
+                [
+                    ClinicalSupervisorCaseController::class,
+                    'noteVersions',
+                ]
+            )->name('cases.notes.versions');
         });
 
     Route::get('/profile', [

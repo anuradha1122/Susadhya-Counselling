@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             SuperAdminSeeder::class,
             CounsellorReferenceSeeder::class,
+            ClinicalRecordPermissionSeeder::class,
         ]);
     }
 }

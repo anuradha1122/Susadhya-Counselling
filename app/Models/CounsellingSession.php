@@ -170,4 +170,9 @@ class CounsellingSession extends Model
     {
         return $this->status === self::STATUS_COMPLETED;
     }
+
+    public function clinicalNotes(): HasMany
+    {
+        return $this->hasMany(ClinicalNote::class);
+    }
 }

@@ -1,102 +1,236 @@
 <?php
 
+use App\Models\CounsellorProfile;
 use App\Models\User;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
-    $this->seed(RolePermissionSeeder::class);
+beforeEach(function (): void {
+    $this->seed(
+        RolePermissionSeeder::class
+    );
 });
 
-test('guest is redirected to login from dashboard', function () {
-    $this->get('/dashboard')
-        ->assertRedirect(route('login'));
-});
+function dashboardUser(
+    string $role
+): User {
+    $user = User::factory()->create([
+        'is_active' => true,
+        'email_verified_at' => now(),
+    ]);
 
-test('super administrator is redirected to admin dashboard', function () {
-    $user = User::factory()->create();
-    $user->assignRole('super_admin');
+    $user->assignRole($role);
 
-    $this->actingAs($user)
-        ->get('/dashboard')
-        ->assertRedirect(route('admin.dashboard'));
-});
+    return $user;
+}
 
-test('admin is redirected to admin dashboard', function () {
-    $user = User::factory()->create();
-    $user->assignRole('admin');
+test(
+    'guest is redirected to login from dashboard',
+    function (): void {
+        $this
+            ->get(
+                route('dashboard')
+            )
+            ->assertRedirect(
+                route('login')
+            );
+    }
+);
 
-    $this->actingAs($user)
-        ->get('/dashboard')
-        ->assertRedirect(route('admin.dashboard'));
-});
-
-test('counsellor is redirected to counsellor dashboard', function () {
-    $user = User::factory()->create();
-    $user->assignRole('counsellor');
-
-    $this->actingAs($user)
-        ->get('/dashboard')
-        ->assertRedirect(route('counsellor.dashboard'));
-});
-
-test('admin can access admin dashboard', function () {
-    $user = User::factory()->create();
-    $user->assignRole('admin');
-
-    $this->actingAs($user)
-        ->get('/admin/dashboard')
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page
-            ->component('Admin/Dashboard')
-            ->has('stats')
+test(
+    'super administrator is redirected to admin dashboard',
+    function (): void {
+        $user = dashboardUser(
+            'super_admin'
         );
-});
 
-test('counsellor cannot access admin dashboard', function () {
-    $user = User::factory()->create();
-    $user->assignRole('counsellor');
+        $this
+            ->actingAs($user)
+            ->get(
+                route('dashboard')
+            )
+            ->assertRedirect(
+                route(
+                    'admin.dashboard'
+                )
+            );
+    }
+);
 
-    $this->actingAs($user)
-        ->get('/admin/dashboard')
-        ->assertForbidden();
-});
-
-test('counsellor can access counsellor dashboard', function () {
-    $user = User::factory()->create();
-    $user->assignRole('counsellor');
-
-    $this->actingAs($user)
-        ->get('/counsellor/dashboard')
-        ->assertOk()
-        ->assertInertia(fn ($page) => $page
-            ->component('Counsellor/Dashboard')
-            ->has('stats')
+test(
+    'admin is redirected to admin dashboard',
+    function (): void {
+        $user = dashboardUser(
+            'admin'
         );
-});
 
-test('admin cannot access counsellor dashboard', function () {
-    $user = User::factory()->create();
-    $user->assignRole('admin');
+        $this
+            ->actingAs($user)
+            ->get(
+                route('dashboard')
+            )
+            ->assertRedirect(
+                route(
+                    'admin.dashboard'
+                )
+            );
+    }
+);
 
-    $this->actingAs($user)
-        ->get('/counsellor/dashboard')
-        ->assertForbidden();
-});
+test(
+    'counsellor is redirected to counsellor dashboard',
+    function (): void {
+        $user = dashboardUser(
+            'counsellor'
+        );
 
-test('inactive user is logged out', function () {
-    $user = User::factory()
-        ->inactive()
-        ->create();
+        $this
+            ->actingAs($user)
+            ->get(
+                route('dashboard')
+            )
+            ->assertRedirect(
+                route(
+                    'counsellor.dashboard'
+                )
+            );
+    }
+);
 
-    $user->assignRole('admin');
+test(
+    'admin can access admin dashboard',
+    function (): void {
+        $admin = dashboardUser(
+            'admin'
+        );
 
-    $this->actingAs($user)
-        ->get('/dashboard')
-        ->assertRedirect(route('login'))
-        ->assertSessionHasErrors('email');
+        $this
+            ->actingAs($admin)
+            ->get(
+                route(
+                    'admin.dashboard'
+                )
+            )
+            ->assertOk()
+            ->assertInertia(
+                fn (Assert $page) => $page
+                    ->component(
+                        'Admin/Dashboard'
+                    )
+            );
+    }
+);
 
-    $this->assertGuest();
-});
+test(
+    'counsellor cannot access admin dashboard',
+    function (): void {
+        $counsellor =
+            dashboardUser(
+                'counsellor'
+            );
+
+        CounsellorProfile::factory()
+            ->create([
+                'user_id' => $counsellor->id,
+            ]);
+
+        $this
+            ->actingAs(
+                $counsellor
+            )
+            ->get(
+                route(
+                    'admin.dashboard'
+                )
+            )
+            ->assertForbidden();
+    }
+);
+
+test(
+    'counsellor can access counsellor dashboard',
+    function (): void {
+        $counsellor =
+            dashboardUser(
+                'counsellor'
+            );
+
+        CounsellorProfile::factory()
+            ->create([
+                'user_id' => $counsellor->id,
+
+                'status' => 'active',
+            ]);
+
+        $this
+            ->actingAs(
+                $counsellor
+            )
+            ->get(
+                route(
+                    'counsellor.dashboard'
+                )
+            )
+            ->assertOk()
+            ->assertInertia(
+                fn (Assert $page) => $page
+                    ->component(
+                        'Counsellor/Dashboard'
+                    )
+            );
+    }
+);
+
+test(
+    'admin cannot access counsellor dashboard',
+    function (): void {
+        $admin =
+            dashboardUser(
+                'admin'
+            );
+
+        $this
+            ->actingAs(
+                $admin
+            )
+            ->get(
+                route(
+                    'counsellor.dashboard'
+                )
+            )
+            ->assertForbidden();
+    }
+);
+
+test(
+    'inactive user is logged out',
+    function (): void {
+        $user = dashboardUser(
+            'admin'
+        );
+
+        $user->update([
+            'is_active' => false,
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->get(
+                route('dashboard')
+            );
+
+        $response->assertRedirect(
+            route('login')
+        );
+
+        $this->assertGuest();
+
+        $response
+            ->assertSessionHasErrors(
+                'email'
+            );
+    }
+);

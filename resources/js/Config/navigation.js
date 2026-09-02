@@ -1,5 +1,6 @@
 import {
     BriefcaseBusiness,
+    BriefcaseMedical,
     CalendarDays,
     ClipboardList,
     ClipboardPenLine,
@@ -73,6 +74,15 @@ export const adminNavigation = [
         icon: ClipboardPenLine,
         permission: "dashboard.admin.view",
     },
+
+    // M12 — Case & Clinical Records
+    {
+        label: "Clinical Supervision",
+        routeName: "clinical-supervisor.cases.index",
+        icon: BriefcaseMedical,
+        permission: "clinical.records.review",
+    },
+
     {
         label: "Payments",
         icon: CircleDollarSign,
@@ -132,6 +142,14 @@ export const counsellorNavigation = [
         routeName: "counsellor.sessions.index",
         icon: ClipboardPenLine,
         permission: "dashboard.counsellor.view",
+    },
+
+    // M12 — Case & Clinical Records
+    {
+        label: "Cases",
+        routeName: "counsellor.cases.index",
+        icon: BriefcaseMedical,
+        permission: "clinical.records.manage",
     },
 ];
 
