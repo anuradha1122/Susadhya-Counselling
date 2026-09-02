@@ -190,4 +190,9 @@ class ClientProfile extends Model
             'profile_completed_at' => $completedAt,
         ])->save();
     }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
 }

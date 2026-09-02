@@ -8,6 +8,8 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ServiceCategoryController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Client\AppointmentController as ClientAppointmentController;
+use App\Http\Controllers\Client\AppointmentSlotController as ClientAppointmentSlotController;
 use App\Http\Controllers\Client\CounsellorDiscoveryController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
 use App\Http\Controllers\Client\EmergencyContactController as ClientEmergencyContactController;
@@ -217,6 +219,13 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::get('/counsellors/{counsellor}', [CounsellorDiscoveryController::class, 'show'])
                 ->name('counsellors.show');
+
+            Route::get('/counsellors/{counsellor}/appointment-slots', [ClientAppointmentSlotController::class, 'index'])
+                ->name('counsellors.appointment-slots.index');
+
+            Route::post('/appointments', [ClientAppointmentController::class, 'store'])
+                ->name('appointments.store');
+
         });
 
     Route::get('/profile', [

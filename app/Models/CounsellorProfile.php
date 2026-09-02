@@ -102,4 +102,9 @@ class CounsellorProfile extends Model
     {
         return $this->hasMany(CounsellorLeaveDay::class);
     }
+
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
 }

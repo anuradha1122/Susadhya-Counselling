@@ -1,7 +1,9 @@
+import InputError from "@/Components/InputError";
 import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
 import ClientLayout from "@/Layouts/ClientLayout";
-import { Head, Link } from "@inertiajs/react";
+import { Head, Link, useForm } from "@inertiajs/react";
+import { useEffect, useState } from "react";
 
 function formatValue(value) {
     if (value === null || value === undefined || value === "") {
@@ -11,6 +13,13 @@ function formatValue(value) {
     return String(value)
         .replaceAll("_", " ")
         .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function todayForInput() {
+    const now = new Date();
+    const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+
+    return localDate.toISOString().slice(0, 10);
 }
 
 function Pill({ children }) {
@@ -103,7 +112,7 @@ function AvailabilitySection({ availability }) {
                                         </p>
                                     </div>
 
-                                    <MutedPill>Available</MutedPill>
+                                    <MutedPill>Published</MutedPill>
                                 </div>
 
                                 {slot.breaks.length > 0 && (
@@ -146,6 +155,266 @@ function AvailabilitySection({ availability }) {
     );
 }
 
+function BookingPanel({ counsellor }) {
+    const [slots, setSlots] = useState([]);
+    const [loadingSlots, setLoadingSlots] = useState(false);
+    const [slotError, setSlotError] = useState("");
+
+    const {
+        data,
+        setData,
+        post,
+        processing,
+        errors,
+        recentlySuccessful,
+        reset,
+    } = useForm({
+        counsellor_profile_id: counsellor.id,
+        counselling_service_id: "",
+        appointment_date: todayForInput(),
+        start_time: "",
+        end_time: "",
+        mode: "online",
+        client_notes: "",
+    });
+
+    useEffect(() => {
+        if (!data.appointment_date || !data.mode) {
+            setSlots([]);
+            return;
+        }
+
+        const controller = new AbortController();
+
+        setLoadingSlots(true);
+        setSlotError("");
+        setData("start_time", "");
+        setData("end_time", "");
+
+        const parameters = new URLSearchParams({
+            appointment_date: data.appointment_date,
+            mode: data.mode,
+        });
+
+        fetch(
+            `${route(
+                "client.counsellors.appointment-slots.index",
+                counsellor.id,
+            )}?${parameters.toString()}`,
+            {
+                headers: {
+                    Accept: "application/json",
+                },
+                signal: controller.signal,
+            },
+        )
+            .then(async (response) => {
+                if (!response.ok) {
+                    throw new Error("Unable to load available slots.");
+                }
+
+                return response.json();
+            })
+            .then((payload) => {
+                setSlots(payload.slots ?? []);
+            })
+            .catch((error) => {
+                if (error.name === "AbortError") {
+                    return;
+                }
+
+                setSlots([]);
+                setSlotError(
+                    "Available slots could not be loaded. Please try another date or mode.",
+                );
+            })
+            .finally(() => {
+                setLoadingSlots(false);
+            });
+
+        return () => controller.abort();
+    }, [counsellor.id, data.appointment_date, data.mode]);
+
+    const selectSlot = (slot) => {
+        setData("start_time", slot.start_time);
+        setData("end_time", slot.end_time);
+    };
+
+    const submit = (event) => {
+        event.preventDefault();
+
+        post(route("client.appointments.store"), {
+            preserveScroll: true,
+            onSuccess: () => {
+                reset("start_time", "end_time", "client_notes");
+            },
+        });
+    };
+
+    const hasSelectedSlot = data.start_time && data.end_time;
+
+    return (
+        <SectionCard
+            title="Book Appointment"
+            description="Choose an available date, mode, and time slot. The system rechecks the slot before saving, because calendars enjoy betrayal."
+        >
+            <form onSubmit={submit} className="space-y-5">
+                <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                        <label
+                            htmlFor="appointment_date"
+                            className="text-sm font-medium text-gray-700"
+                        >
+                            Appointment date
+                        </label>
+
+                        <input
+                            id="appointment_date"
+                            type="date"
+                            min={todayForInput()}
+                            value={data.appointment_date}
+                            onChange={(event) =>
+                                setData("appointment_date", event.target.value)
+                            }
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        />
+
+                        <InputError
+                            message={errors.appointment_date}
+                            className="mt-2"
+                        />
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="mode"
+                            className="text-sm font-medium text-gray-700"
+                        >
+                            Counselling mode
+                        </label>
+
+                        <select
+                            id="mode"
+                            value={data.mode}
+                            onChange={(event) =>
+                                setData("mode", event.target.value)
+                            }
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        >
+                            <option value="online">Online</option>
+                            <option value="in_person">In person</option>
+                        </select>
+
+                        <InputError message={errors.mode} className="mt-2" />
+                    </div>
+                </div>
+
+                <div>
+                    <div className="flex items-center justify-between gap-4">
+                        <p className="text-sm font-medium text-gray-700">
+                            Available slots
+                        </p>
+
+                        {loadingSlots && (
+                            <p className="text-xs text-gray-500">
+                                Loading slots...
+                            </p>
+                        )}
+                    </div>
+
+                    {slotError && (
+                        <div className="mt-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+                            {slotError}
+                        </div>
+                    )}
+
+                    {!loadingSlots && slots.length === 0 && !slotError && (
+                        <div className="mt-2 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600">
+                            No available slots for this date and mode. Try
+                            another day, because time remains stubbornly linear.
+                        </div>
+                    )}
+
+                    {slots.length > 0 && (
+                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                            {slots.map((slot) => {
+                                const selected =
+                                    data.start_time === slot.start_time &&
+                                    data.end_time === slot.end_time;
+
+                                return (
+                                    <button
+                                        key={`${slot.date}-${slot.start_time}-${slot.end_time}`}
+                                        type="button"
+                                        onClick={() => selectSlot(slot)}
+                                        className={`rounded-lg border p-4 text-left transition ${
+                                            selected
+                                                ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100"
+                                                : "border-gray-200 bg-white hover:border-indigo-300 hover:bg-indigo-50"
+                                        }`}
+                                    >
+                                        <p className="font-semibold text-gray-900">
+                                            {slot.start_time} - {slot.end_time}
+                                        </p>
+
+                                        <p className="mt-1 text-xs text-gray-500">
+                                            {formatValue(slot.mode)} ·{" "}
+                                            {slot.timezone}
+                                        </p>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    <InputError message={errors.start_time} className="mt-2" />
+                    <InputError message={errors.end_time} className="mt-2" />
+                </div>
+
+                <div>
+                    <label
+                        htmlFor="client_notes"
+                        className="text-sm font-medium text-gray-700"
+                    >
+                        Notes for counsellor
+                    </label>
+
+                    <textarea
+                        id="client_notes"
+                        rows="4"
+                        value={data.client_notes}
+                        onChange={(event) =>
+                            setData("client_notes", event.target.value)
+                        }
+                        placeholder="Briefly mention what you would like support with."
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+
+                    <InputError
+                        message={errors.client_notes}
+                        className="mt-2"
+                    />
+                </div>
+
+                {recentlySuccessful && (
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+                        Appointment request submitted successfully.
+                    </div>
+                )}
+
+                <div className="flex justify-end">
+                    <PrimaryButton
+                        type="submit"
+                        disabled={processing || !hasSelectedSlot}
+                    >
+                        Request appointment
+                    </PrimaryButton>
+                </div>
+            </form>
+        </SectionCard>
+    );
+}
+
 export default function Show({ counsellor }) {
     return (
         <ClientLayout
@@ -155,8 +424,7 @@ export default function Show({ counsellor }) {
                         Counsellor Profile
                     </h2>
                     <p className="mt-1 text-sm text-gray-500">
-                        Review counsellor details before booking becomes
-                        available in the appointments module.
+                        Review counsellor details and request an appointment.
                     </p>
                 </div>
             }
@@ -199,10 +467,9 @@ export default function Show({ counsellor }) {
                                     </p>
                                 </div>
 
-                                <div className="flex flex-col gap-3 sm:flex-row">
-                                    <PrimaryButton type="button" disabled>
-                                        Book appointment in M09
-                                    </PrimaryButton>
+                                <div className="rounded-lg border border-indigo-100 bg-white px-4 py-3 text-sm text-indigo-700 shadow-sm">
+                                    Booking requests start as pending until the
+                                    counsellor confirms them.
                                 </div>
                             </div>
                         </div>
@@ -229,6 +496,8 @@ export default function Show({ counsellor }) {
 
                     <div className="grid gap-6 lg:grid-cols-3">
                         <div className="space-y-6 lg:col-span-2">
+                            <BookingPanel counsellor={counsellor} />
+
                             <SectionCard
                                 title="About"
                                 description="Professional background and counselling profile."
@@ -245,8 +514,8 @@ export default function Show({ counsellor }) {
                             </SectionCard>
 
                             <SectionCard
-                                title="Availability"
-                                description="Published recurring availability. Appointment booking will use this later in M09."
+                                title="Published Availability"
+                                description="General recurring availability. The booking form above shows only currently bookable slots."
                             >
                                 <AvailabilitySection
                                     availability={
@@ -342,15 +611,25 @@ export default function Show({ counsellor }) {
                             </SectionCard>
 
                             <SectionCard
-                                title="Booking Status"
-                                description="Appointment booking is intentionally delayed until workbook M09."
+                                title="Booking Protection"
+                                description="How appointment safety is handled."
                             >
-                                <p className="text-sm text-gray-600">
-                                    You can review counsellor details now.
-                                    Actual appointment booking, conflict
-                                    handling, payment workflow, and appointment
-                                    status tracking will be implemented in M09.
-                                </p>
+                                <ul className="space-y-2 text-sm text-gray-600">
+                                    <li>
+                                        • Breaks, blocked slots, and leave days
+                                        are excluded.
+                                    </li>
+                                    <li>
+                                        • Existing counsellor bookings are
+                                        excluded.
+                                    </li>
+                                    <li>
+                                        • Existing client bookings are excluded.
+                                    </li>
+                                    <li>
+                                        • The slot is rechecked before saving.
+                                    </li>
+                                </ul>
                             </SectionCard>
 
                             <SectionCard title="Contact Visibility">
