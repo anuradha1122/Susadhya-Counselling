@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\ServiceCategoryController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\AppointmentController as AdminAppointmentController;
 use App\Http\Controllers\Client\AppointmentController as ClientAppointmentController;
 use App\Http\Controllers\Client\AppointmentSlotController as ClientAppointmentSlotController;
 use App\Http\Controllers\Client\CounsellorDiscoveryController;
@@ -103,6 +104,12 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::get('/availability', [AdminAvailabilityController::class, 'index'])
                 ->name('availability.index');
+
+            Route::get('/appointments', [AdminAppointmentController::class, 'index'])
+                ->name('appointments.index');
+
+            Route::patch('/appointments/{appointment}/status', [AdminAppointmentController::class, 'updateStatus'])
+                ->name('appointments.update-status');
         });
 
     Route::prefix('counsellor')

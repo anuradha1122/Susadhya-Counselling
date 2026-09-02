@@ -55,8 +55,9 @@ export const adminNavigation = [
     },
     {
         label: "Appointments",
+        routeName: "admin.appointments.index",
         icon: CalendarDays,
-        disabled: true,
+        permission: "dashboard.admin.view",
     },
     {
         label: "Payments",
