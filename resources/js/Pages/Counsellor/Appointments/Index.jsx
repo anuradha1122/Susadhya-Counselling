@@ -2,8 +2,8 @@ import InputError from "@/Components/InputError";
 import Pagination from "@/Components/Pagination";
 import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
-import ClientLayout from "@/Layouts/ClientLayout";
-import { Head, Link, router, useForm } from "@inertiajs/react";
+import CounsellorLayout from "@/Layouts/CounsellorLayout";
+import { Head, router, useForm } from "@inertiajs/react";
 import { useState } from "react";
 
 function formatValue(value) {
@@ -29,10 +29,6 @@ function statusClasses(status) {
     return classes[status] ?? "bg-gray-100 text-gray-700";
 }
 
-function modeLabel(mode) {
-    return formatValue(mode);
-}
-
 function StatusBadge({ status }) {
     return (
         <span
@@ -45,29 +41,31 @@ function StatusBadge({ status }) {
     );
 }
 
-function CancelAppointmentForm({ appointment }) {
+function ConfirmAppointmentForm({ appointment }) {
     const [isOpen, setIsOpen] = useState(false);
 
     const { data, setData, patch, processing, errors, reset } = useForm({
-        cancellation_reason: "",
+        meeting_link: appointment.meeting_link ?? "",
+        location: appointment.location ?? "",
+        counsellor_notes: appointment.counsellor_notes ?? "",
     });
 
     const submit = (event) => {
         event.preventDefault();
 
-        patch(route("client.appointments.cancel", appointment.id), {
+        patch(route("counsellor.appointments.confirm", appointment.id), {
             preserveScroll: true,
             onSuccess: () => {
-                reset("cancellation_reason");
+                reset("meeting_link", "location", "counsellor_notes");
                 setIsOpen(false);
             },
         });
     };
 
-    if (!appointment.can_be_cancelled) {
+    if (!appointment.can_be_confirmed) {
         return (
             <SecondaryButton type="button" disabled>
-                Cannot cancel
+                Already processed
             </SecondaryButton>
         );
     }
@@ -75,52 +73,112 @@ function CancelAppointmentForm({ appointment }) {
     return (
         <div className="w-full sm:w-auto">
             {!isOpen ? (
-                <SecondaryButton type="button" onClick={() => setIsOpen(true)}>
-                    Cancel appointment
-                </SecondaryButton>
+                <PrimaryButton type="button" onClick={() => setIsOpen(true)}>
+                    Confirm appointment
+                </PrimaryButton>
             ) : (
                 <form
                     onSubmit={submit}
-                    className="mt-3 rounded-lg border border-red-100 bg-white p-4 sm:min-w-80"
+                    className="mt-3 rounded-lg border border-green-100 bg-white p-4 sm:min-w-96"
                 >
-                    <label
-                        htmlFor={`cancellation_reason_${appointment.id}`}
-                        className="text-sm font-medium text-gray-700"
-                    >
-                        Cancellation reason
-                    </label>
+                    {appointment.mode === "online" && (
+                        <div>
+                            <label
+                                htmlFor={`meeting_link_${appointment.id}`}
+                                className="text-sm font-medium text-gray-700"
+                            >
+                                Meeting link
+                            </label>
 
-                    <textarea
-                        id={`cancellation_reason_${appointment.id}`}
-                        rows="3"
-                        value={data.cancellation_reason}
-                        onChange={(event) =>
-                            setData("cancellation_reason", event.target.value)
-                        }
-                        placeholder="Optional reason for cancelling this appointment."
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                    />
+                            <input
+                                id={`meeting_link_${appointment.id}`}
+                                type="url"
+                                value={data.meeting_link}
+                                onChange={(event) =>
+                                    setData("meeting_link", event.target.value)
+                                }
+                                placeholder="https://meet.google.com/..."
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            />
 
-                    <InputError
-                        message={
-                            errors.cancellation_reason || errors.appointment
-                        }
-                        className="mt-2"
-                    />
+                            <InputError
+                                message={errors.meeting_link}
+                                className="mt-2"
+                            />
+                        </div>
+                    )}
 
-                    <div className="mt-3 flex flex-wrap justify-end gap-3">
+                    {appointment.mode === "in_person" && (
+                        <div>
+                            <label
+                                htmlFor={`location_${appointment.id}`}
+                                className="text-sm font-medium text-gray-700"
+                            >
+                                Location
+                            </label>
+
+                            <input
+                                id={`location_${appointment.id}`}
+                                type="text"
+                                value={data.location}
+                                onChange={(event) =>
+                                    setData("location", event.target.value)
+                                }
+                                placeholder="Counselling room / branch location"
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            />
+
+                            <InputError
+                                message={errors.location}
+                                className="mt-2"
+                            />
+                        </div>
+                    )}
+
+                    <div className="mt-4">
+                        <label
+                            htmlFor={`counsellor_notes_${appointment.id}`}
+                            className="text-sm font-medium text-gray-700"
+                        >
+                            Counsellor notes
+                        </label>
+
+                        <textarea
+                            id={`counsellor_notes_${appointment.id}`}
+                            rows="3"
+                            value={data.counsellor_notes}
+                            onChange={(event) =>
+                                setData("counsellor_notes", event.target.value)
+                            }
+                            placeholder="Optional notes for the client."
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        />
+
+                        <InputError
+                            message={
+                                errors.counsellor_notes || errors.appointment
+                            }
+                            className="mt-2"
+                        />
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap justify-end gap-3">
                         <SecondaryButton
                             type="button"
                             onClick={() => {
-                                reset("cancellation_reason");
+                                reset(
+                                    "meeting_link",
+                                    "location",
+                                    "counsellor_notes",
+                                );
                                 setIsOpen(false);
                             }}
                         >
-                            Keep appointment
+                            Not now
                         </SecondaryButton>
 
                         <PrimaryButton disabled={processing}>
-                            Confirm cancellation
+                            Confirm
                         </PrimaryButton>
                     </div>
                 </form>
@@ -137,16 +195,18 @@ function AppointmentCard({ appointment }) {
                     <div>
                         <div className="flex flex-wrap items-center gap-3">
                             <h3 className="text-lg font-semibold text-gray-900">
-                                {appointment.counsellor.name}
+                                {appointment.client.name}
                             </h3>
 
                             <StatusBadge status={appointment.status} />
                         </div>
 
                         <p className="mt-1 text-sm text-gray-500">
-                            {formatValue(
-                                appointment.counsellor.professional_title,
-                            )}
+                            {appointment.client.email}
+                        </p>
+
+                        <p className="mt-1 text-sm text-gray-500">
+                            {appointment.client.phone ?? "Phone not provided"}
                         </p>
                     </div>
 
@@ -167,7 +227,7 @@ function AppointmentCard({ appointment }) {
                         Mode
                     </p>
                     <p className="mt-1 font-semibold text-gray-900">
-                        {modeLabel(appointment.mode)}
+                        {formatValue(appointment.mode)}
                     </p>
                 </div>
 
@@ -203,13 +263,14 @@ function AppointmentCard({ appointment }) {
 
             {(appointment.client_notes ||
                 appointment.counsellor_notes ||
-                appointment.cancellation_reason) && (
+                appointment.cancellation_reason ||
+                appointment.reminder_scheduled_at) && (
                 <div className="border-t border-gray-100 px-6 py-5">
-                    <div className="grid gap-4 lg:grid-cols-3">
+                    <div className="grid gap-4 lg:grid-cols-4">
                         {appointment.client_notes && (
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                    Your notes
+                                    Client notes
                                 </p>
                                 <p className="mt-1 text-sm text-gray-700">
                                     {appointment.client_notes}
@@ -220,7 +281,7 @@ function AppointmentCard({ appointment }) {
                         {appointment.counsellor_notes && (
                             <div>
                                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                    Counsellor notes
+                                    Your notes
                                 </p>
                                 <p className="mt-1 text-sm text-gray-700">
                                     {appointment.counsellor_notes}
@@ -238,28 +299,28 @@ function AppointmentCard({ appointment }) {
                                 </p>
                             </div>
                         )}
+
+                        {appointment.reminder_scheduled_at && (
+                            <div>
+                                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                    Reminder hook
+                                </p>
+                                <p className="mt-1 text-sm text-gray-700">
+                                    {appointment.reminder_scheduled_at}
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
 
             <div className="flex flex-col gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 lg:flex-row lg:items-start lg:justify-between">
-                <Link
-                    href={route(
-                        "client.counsellors.show",
-                        appointment.counsellor.id,
-                    )}
-                    className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
-                >
-                    View counsellor profile
-                </Link>
+                <p className="text-sm text-gray-600">
+                    Confirmation will update status history and prepare the
+                    reminder hook.
+                </p>
 
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
-                    <SecondaryButton type="button" disabled>
-                        Reschedule soon
-                    </SecondaryButton>
-
-                    <CancelAppointmentForm appointment={appointment} />
-                </div>
+                <ConfirmAppointmentForm appointment={appointment} />
             </div>
         </div>
     );
@@ -274,7 +335,7 @@ export default function Index({ appointments, filters, options }) {
     const submit = (event) => {
         event.preventDefault();
 
-        get(route("client.appointments.index"), {
+        get(route("counsellor.appointments.index"), {
             preserveScroll: true,
             preserveState: true,
             replace: true,
@@ -283,7 +344,7 @@ export default function Index({ appointments, filters, options }) {
 
     const resetFilters = () => {
         router.get(
-            route("client.appointments.index"),
+            route("counsellor.appointments.index"),
             {},
             {
                 preserveScroll: true,
@@ -293,29 +354,29 @@ export default function Index({ appointments, filters, options }) {
     };
 
     return (
-        <ClientLayout
+        <CounsellorLayout
             header={
                 <div>
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        My Appointments
+                        Counsellor Appointments
                     </h2>
                     <p className="mt-1 text-sm text-gray-500">
-                        View your appointment requests, upcoming counselling
-                        sessions, and appointment history.
+                        Review client appointment requests and confirm pending
+                        sessions.
                     </p>
                 </div>
             }
         >
-            <Head title="My Appointments" />
+            <Head title="Counsellor Appointments" />
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
                     <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4">
                         <p className="text-sm text-indigo-900">
-                            Pending and confirmed appointments can be cancelled
-                            by the client. Completed or already closed
-                            appointments are locked, because time travel remains
-                            unavailable despite many feature requests.
+                            Pending appointments need confirmation. Online
+                            appointments require a meeting link. In-person
+                            appointments require a location. Simple, which is
+                            why computers need sixteen files to enforce it.
                         </p>
                     </div>
 
@@ -412,17 +473,10 @@ export default function Index({ appointments, filters, options }) {
                                 No appointments found
                             </h3>
                             <p className="mt-2 text-sm text-gray-500">
-                                Change the filters or book an appointment from a
-                                counsellor profile.
+                                Change the filters or wait for clients to book
+                                appointments. Waiting: the original background
+                                job.
                             </p>
-
-                            <div className="mt-5">
-                                <Link href={route("client.counsellors.index")}>
-                                    <PrimaryButton type="button">
-                                        Find counsellors
-                                    </PrimaryButton>
-                                </Link>
-                            </div>
                         </div>
                     ) : (
                         <div className="space-y-5">
@@ -438,6 +492,6 @@ export default function Index({ appointments, filters, options }) {
                     <Pagination links={appointments.links} />
                 </div>
             </div>
-        </ClientLayout>
+        </CounsellorLayout>
     );
 }

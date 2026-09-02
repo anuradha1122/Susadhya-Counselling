@@ -16,6 +16,7 @@ use App\Http\Controllers\Client\EmergencyContactController as ClientEmergencyCon
 use App\Http\Controllers\Client\PreferenceController as ClientPreferenceController;
 use App\Http\Controllers\Client\PrivacySettingsController as ClientPrivacySettingsController;
 use App\Http\Controllers\Client\ProfileController as ClientProfileController;
+use App\Http\Controllers\Counsellor\AppointmentController as CounsellorAppointmentController;
 use App\Http\Controllers\Counsellor\AvailabilityBreakController as CounsellorAvailabilityBreakController;
 use App\Http\Controllers\Counsellor\AvailabilityController as CounsellorAvailabilityController;
 use App\Http\Controllers\Counsellor\BlockedSlotController as CounsellorBlockedSlotController;
@@ -151,6 +152,12 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::delete('/availability/leave-days/{leaveDay}', [CounsellorLeaveDayController::class, 'destroy'])
                 ->name('availability.leave-days.destroy');
+
+            Route::get('/appointments', [CounsellorAppointmentController::class, 'index'])
+                ->name('appointments.index');
+
+            Route::patch('/appointments/{appointment}/confirm', [CounsellorAppointmentController::class, 'confirm'])
+                ->name('appointments.confirm');
         });
 
     Route::prefix('client')
@@ -228,6 +235,9 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::post('/appointments', [ClientAppointmentController::class, 'store'])
                 ->name('appointments.store');
+
+            Route::patch('/appointments/{appointment}/cancel', [ClientAppointmentController::class, 'cancel'])
+                ->name('appointments.cancel');
 
         });
 

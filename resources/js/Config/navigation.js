@@ -95,9 +95,10 @@ export const counsellorNavigation = [
         permission: "dashboard.counsellor.view",
     },
     {
-        label: "My Appointments",
+        label: "Appointments",
+        routeName: "counsellor.appointments.index",
         icon: CalendarDays,
-        disabled: true,
+        permission: "dashboard.counsellor.view",
     },
     {
         label: "My Availability",
