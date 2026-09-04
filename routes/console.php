@@ -15,3 +15,9 @@ Schedule::command(
 )
     ->everyFifteenMinutes()
     ->withoutOverlapping();
+
+Schedule::command(
+    'notifications:send-appointment-reminders'
+)
+    ->everyFifteenMinutes()
+    ->withoutOverlapping();

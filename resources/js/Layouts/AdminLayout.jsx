@@ -1,3 +1,4 @@
+import NotificationBell from '@/Components/Notifications/NotificationBell';
 import { adminNavigation } from '@/Config/navigation';
 import AppLayout from '@/Layouts/AppLayout';
 import { usePage } from '@inertiajs/react';
@@ -27,13 +28,15 @@ function FlashMessage({ type, message, onClose }) {
                     <CircleX className="mt-0.5 h-5 w-5 shrink-0" />
                 )}
 
-                <p className="text-sm font-medium">{message}</p>
+                <p className="text-sm font-medium">
+                    {message}
+                </p>
             </div>
 
             <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md p-1 opacity-70 hover:bg-black/5 hover:opacity-100"
+                className="rounded-md p-1 opacity-70 transition hover:bg-black/5 hover:opacity-100"
                 aria-label="Close notification"
             >
                 <X className="h-4 w-4" />
@@ -42,16 +45,17 @@ function FlashMessage({ type, message, onClose }) {
     );
 }
 
-export default function AdminLayout({ title, children }) {
+export default function AdminLayout({
+    title,
+    children,
+}) {
     const { flash = {} } = usePage().props;
 
-    const [successMessage, setSuccessMessage] = useState(
-        flash.success ?? null,
-    );
+    const [successMessage, setSuccessMessage] =
+        useState(flash.success ?? null);
 
-    const [errorMessage, setErrorMessage] = useState(
-        flash.error ?? null,
-    );
+    const [errorMessage, setErrorMessage] =
+        useState(flash.error ?? null);
 
     useEffect(() => {
         setSuccessMessage(flash.success ?? null);
@@ -66,21 +70,33 @@ export default function AdminLayout({ title, children }) {
             setErrorMessage(null);
         }, 5000);
 
-        return () => window.clearTimeout(timeout);
+        return () =>
+            window.clearTimeout(timeout);
     }, [flash.success, flash.error]);
 
     return (
-        <AppLayout title={title} navigation={adminNavigation}>
+        <AppLayout
+            title={title}
+            navigation={adminNavigation}
+        >
+            <div className="mb-4 flex justify-end">
+                <NotificationBell />
+            </div>
+
             <FlashMessage
                 type="success"
                 message={successMessage}
-                onClose={() => setSuccessMessage(null)}
+                onClose={() =>
+                    setSuccessMessage(null)
+                }
             />
 
             <FlashMessage
                 type="error"
                 message={errorMessage}
-                onClose={() => setErrorMessage(null)}
+                onClose={() =>
+                    setErrorMessage(null)
+                }
             />
 
             {children}

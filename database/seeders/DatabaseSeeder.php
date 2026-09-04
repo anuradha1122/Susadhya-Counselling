@@ -15,6 +15,8 @@ class DatabaseSeeder extends Seeder
             ClinicalRecordPermissionSeeder::class,
             DocumentPermissionSeeder::class,
             PaymentPermissionSeeder::class,
+            NotificationTemplateSeeder::class,
+            NotificationPermissionSeeder::class,
         ]);
     }
 }
