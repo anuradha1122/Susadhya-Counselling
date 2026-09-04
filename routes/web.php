@@ -18,9 +18,11 @@ use App\Http\Controllers\Client\DashboardController as ClientDashboardController
 use App\Http\Controllers\Client\DocumentController as ClientDocumentController;
 use App\Http\Controllers\Client\EmergencyContactController as ClientEmergencyContactController;
 use App\Http\Controllers\Client\IntakeController as ClientIntakeController;
+use App\Http\Controllers\Client\PaymentController as ClientPaymentController;
 use App\Http\Controllers\Client\PreferenceController as ClientPreferenceController;
 use App\Http\Controllers\Client\PrivacySettingsController as ClientPrivacySettingsController;
 use App\Http\Controllers\Client\ProfileController as ClientProfileController;
+use App\Http\Controllers\Client\RefundController as ClientRefundController;
 use App\Http\Controllers\Client\SessionController as ClientSessionController;
 use App\Http\Controllers\ClinicalSupervisor\CaseController as ClinicalSupervisorCaseController;
 use App\Http\Controllers\ClinicalSupervisor\DocumentController as ClinicalSupervisorDocumentController;
@@ -34,35 +36,118 @@ use App\Http\Controllers\Counsellor\DocumentController as CounsellorDocumentCont
 use App\Http\Controllers\Counsellor\LeaveDayController as CounsellorLeaveDayController;
 use App\Http\Controllers\Counsellor\SessionController as CounsellorSessionController;
 use App\Http\Controllers\DashboardRedirectController;
+use App\Http\Controllers\Finance\PaymentController as FinancePaymentController;
+use App\Http\Controllers\Finance\RefundController as FinanceRefundController;
 use App\Http\Controllers\IntakeReviewController;
+use App\Http\Controllers\PaymentWebhookController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/', function () {
     return inertia('Welcome');
 })->name('home');
 
-Route::middleware(['auth', 'active'])->group(function () {
-    Route::get('/dashboard', DashboardRedirectController::class)
-        ->name('dashboard');
+/*
+|--------------------------------------------------------------------------
+| Payment Provider Webhooks
+|--------------------------------------------------------------------------
+|
+| Provider callbacks cannot use normal browser CSRF protection because
+| requests originate from the external payment provider.
+|
+| Each provider adapter is still responsible for validating the provider
+| signature before any payment state is changed.
+|
+*/
+
+Route::post(
+    '/webhooks/payments/{provider}',
+    PaymentWebhookController::class
+)
+    ->withoutMiddleware([
+        ValidateCsrfToken::class,
+    ])
+    ->middleware('throttle:120,1')
+    ->name('payments.webhook');
+
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware([
+    'auth',
+    'active',
+])->group(function (): void {
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard Redirect
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/dashboard',
+        DashboardRedirectController::class
+    )->name('dashboard');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Routes
+    |--------------------------------------------------------------------------
+    */
 
     Route::prefix('admin')
         ->name('admin.')
         ->middleware('permission:dashboard.admin.view')
-        ->group(function () {
-            Route::get('/dashboard', AdminDashboardController::class)
-                ->name('dashboard');
+        ->group(function (): void {
+            Route::get(
+                '/dashboard',
+                AdminDashboardController::class
+            )->name('dashboard');
 
-            Route::resource('users', UserController::class)
-                ->except('show');
+            /*
+            |--------------------------------------------------------------------------
+            | Users
+            |--------------------------------------------------------------------------
+            */
 
-            Route::patch('/users/{user}/status', [
-                UserController::class,
-                'updateStatus',
-            ])->name('users.status');
+            Route::resource(
+                'users',
+                UserController::class
+            )->except('show');
 
-            Route::resource('roles', RoleController::class)
-                ->except('show');
+            Route::patch(
+                '/users/{user}/status',
+                [
+                    UserController::class,
+                    'updateStatus',
+                ]
+            )->name('users.status');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Roles
+            |--------------------------------------------------------------------------
+            */
+
+            Route::resource(
+                'roles',
+                RoleController::class
+            )->except('show');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Clients
+            |--------------------------------------------------------------------------
+            */
 
             Route::resource(
                 'clients',
@@ -73,15 +158,27 @@ Route::middleware(['auth', 'active'])->group(function () {
                 'destroy',
             ]);
 
-            Route::patch('/clients/{client}/status', [
-                AdminClientController::class,
-                'updateStatus',
-            ])->name('clients.status');
+            Route::patch(
+                '/clients/{client}/status',
+                [
+                    AdminClientController::class,
+                    'updateStatus',
+                ]
+            )->name('clients.status');
 
-            Route::patch('/clients/{client}/restore', [
-                AdminClientController::class,
-                'restore',
-            ])->name('clients.restore');
+            Route::patch(
+                '/clients/{client}/restore',
+                [
+                    AdminClientController::class,
+                    'restore',
+                ]
+            )->name('clients.restore');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Counsellors
+            |--------------------------------------------------------------------------
+            */
 
             Route::resource(
                 'counsellors',
@@ -90,8 +187,17 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::patch(
                 'counsellors/{counsellor}/restore',
-                [CounsellorController::class, 'restore']
+                [
+                    CounsellorController::class,
+                    'restore',
+                ]
             )->name('counsellors.restore');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Service Categories
+            |--------------------------------------------------------------------------
+            */
 
             Route::resource(
                 'service-categories',
@@ -100,8 +206,19 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::patch(
                 'service-categories/{service_category}/restore',
-                [ServiceCategoryController::class, 'restore']
-            )->name('service-categories.restore');
+                [
+                    ServiceCategoryController::class,
+                    'restore',
+                ]
+            )->name(
+                'service-categories.restore'
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Counselling Services
+            |--------------------------------------------------------------------------
+            */
 
             Route::resource(
                 'counselling-services',
@@ -110,29 +227,101 @@ Route::middleware(['auth', 'active'])->group(function () {
 
             Route::patch(
                 'counselling-services/{counselling_service}/restore',
-                [CounsellingServiceController::class, 'restore']
-            )->name('counselling-services.restore');
+                [
+                    CounsellingServiceController::class,
+                    'restore',
+                ]
+            )->name(
+                'counselling-services.restore'
+            );
 
-            Route::get('/availability', [AdminAvailabilityController::class, 'index'])
-                ->name('availability.index');
+            /*
+            |--------------------------------------------------------------------------
+            | Availability Oversight
+            |--------------------------------------------------------------------------
+            */
 
-            Route::get('/appointments', [AdminAppointmentController::class, 'index'])
-                ->name('appointments.index');
+            Route::get(
+                '/availability',
+                [
+                    AdminAvailabilityController::class,
+                    'index',
+                ]
+            )->name('availability.index');
 
-            Route::patch('/appointments/{appointment}/status', [AdminAppointmentController::class, 'updateStatus'])
-                ->name('appointments.update-status');
+            /*
+            |--------------------------------------------------------------------------
+            | Appointment Oversight
+            |--------------------------------------------------------------------------
+            */
 
-            Route::get('/intakes', [IntakeReviewController::class, 'adminIndex'])
-                ->name('intakes.index');
+            Route::get(
+                '/appointments',
+                [
+                    AdminAppointmentController::class,
+                    'index',
+                ]
+            )->name('appointments.index');
 
-            Route::patch('/intakes/{intake}/review', [IntakeReviewController::class, 'adminReview'])
-                ->name('intakes.review');
+            Route::patch(
+                '/appointments/{appointment}/status',
+                [
+                    AdminAppointmentController::class,
+                    'updateStatus',
+                ]
+            )->name(
+                'appointments.update-status'
+            );
 
-            Route::get('/sessions', [AdminSessionController::class, 'index'])
-                ->name('sessions.index');
+            /*
+            |--------------------------------------------------------------------------
+            | Intake Oversight
+            |--------------------------------------------------------------------------
+            */
 
-            Route::patch('/sessions/{session}/review', [AdminSessionController::class, 'updateReview'])
-                ->name('sessions.review');
+            Route::get(
+                '/intakes',
+                [
+                    IntakeReviewController::class,
+                    'adminIndex',
+                ]
+            )->name('intakes.index');
+
+            Route::patch(
+                '/intakes/{intake}/review',
+                [
+                    IntakeReviewController::class,
+                    'adminReview',
+                ]
+            )->name('intakes.review');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Session Oversight
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/sessions',
+                [
+                    AdminSessionController::class,
+                    'index',
+                ]
+            )->name('sessions.index');
+
+            Route::patch(
+                '/sessions/{session}/review',
+                [
+                    AdminSessionController::class,
+                    'updateReview',
+                ]
+            )->name('sessions.review');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Administrative Documents
+            |--------------------------------------------------------------------------
+            */
 
             Route::middleware(
                 'permission:documents.admin.manage'
@@ -179,151 +368,400 @@ Route::middleware(['auth', 'active'])->group(function () {
             });
         });
 
+    /*
+    |--------------------------------------------------------------------------
+    | Counsellor Routes
+    |--------------------------------------------------------------------------
+    */
+
     Route::prefix('counsellor')
         ->name('counsellor.')
         ->middleware('role:counsellor')
-        ->group(function () {
+        ->group(function (): void {
             Route::get(
                 '/dashboard',
                 CounsellorDashboardController::class
             )->name('dashboard');
 
-            Route::get('/availability', [CounsellorAvailabilityController::class, 'index'])
-                ->name('availability.index');
+            /*
+            |--------------------------------------------------------------------------
+            | Availability
+            |--------------------------------------------------------------------------
+            */
 
-            Route::post('/availability/rules', [CounsellorAvailabilityController::class, 'store'])
-                ->name('availability.rules.store');
+            Route::get(
+                '/availability',
+                [
+                    CounsellorAvailabilityController::class,
+                    'index',
+                ]
+            )->name('availability.index');
 
-            Route::patch('/availability/rules/{availabilityRule}', [CounsellorAvailabilityController::class, 'update'])
-                ->name('availability.rules.update');
+            Route::post(
+                '/availability/rules',
+                [
+                    CounsellorAvailabilityController::class,
+                    'store',
+                ]
+            )->name(
+                'availability.rules.store'
+            );
 
-            Route::delete('/availability/rules/{availabilityRule}', [CounsellorAvailabilityController::class, 'destroy'])
-                ->name('availability.rules.destroy');
+            Route::patch(
+                '/availability/rules/{availabilityRule}',
+                [
+                    CounsellorAvailabilityController::class,
+                    'update',
+                ]
+            )->name(
+                'availability.rules.update'
+            );
 
-            Route::post('/availability/rules/{availabilityRule}/breaks', [CounsellorAvailabilityBreakController::class, 'store'])
-                ->name('availability.breaks.store');
+            Route::delete(
+                '/availability/rules/{availabilityRule}',
+                [
+                    CounsellorAvailabilityController::class,
+                    'destroy',
+                ]
+            )->name(
+                'availability.rules.destroy'
+            );
 
-            Route::patch('/availability/breaks/{availabilityBreak}', [CounsellorAvailabilityBreakController::class, 'update'])
-                ->name('availability.breaks.update');
+            Route::post(
+                '/availability/rules/{availabilityRule}/breaks',
+                [
+                    CounsellorAvailabilityBreakController::class,
+                    'store',
+                ]
+            )->name(
+                'availability.breaks.store'
+            );
 
-            Route::delete('/availability/breaks/{availabilityBreak}', [CounsellorAvailabilityBreakController::class, 'destroy'])
-                ->name('availability.breaks.destroy');
+            Route::patch(
+                '/availability/breaks/{availabilityBreak}',
+                [
+                    CounsellorAvailabilityBreakController::class,
+                    'update',
+                ]
+            )->name(
+                'availability.breaks.update'
+            );
 
-            Route::post('/availability/blocked-slots', [CounsellorBlockedSlotController::class, 'store'])
-                ->name('availability.blocked-slots.store');
+            Route::delete(
+                '/availability/breaks/{availabilityBreak}',
+                [
+                    CounsellorAvailabilityBreakController::class,
+                    'destroy',
+                ]
+            )->name(
+                'availability.breaks.destroy'
+            );
 
-            Route::patch('/availability/blocked-slots/{blockedSlot}', [CounsellorBlockedSlotController::class, 'update'])
-                ->name('availability.blocked-slots.update');
+            Route::post(
+                '/availability/blocked-slots',
+                [
+                    CounsellorBlockedSlotController::class,
+                    'store',
+                ]
+            )->name(
+                'availability.blocked-slots.store'
+            );
 
-            Route::delete('/availability/blocked-slots/{blockedSlot}', [CounsellorBlockedSlotController::class, 'destroy'])
-                ->name('availability.blocked-slots.destroy');
+            Route::patch(
+                '/availability/blocked-slots/{blockedSlot}',
+                [
+                    CounsellorBlockedSlotController::class,
+                    'update',
+                ]
+            )->name(
+                'availability.blocked-slots.update'
+            );
 
-            Route::post('/availability/leave-days', [CounsellorLeaveDayController::class, 'store'])
-                ->name('availability.leave-days.store');
+            Route::delete(
+                '/availability/blocked-slots/{blockedSlot}',
+                [
+                    CounsellorBlockedSlotController::class,
+                    'destroy',
+                ]
+            )->name(
+                'availability.blocked-slots.destroy'
+            );
 
-            Route::patch('/availability/leave-days/{leaveDay}', [CounsellorLeaveDayController::class, 'update'])
-                ->name('availability.leave-days.update');
+            Route::post(
+                '/availability/leave-days',
+                [
+                    CounsellorLeaveDayController::class,
+                    'store',
+                ]
+            )->name(
+                'availability.leave-days.store'
+            );
 
-            Route::delete('/availability/leave-days/{leaveDay}', [CounsellorLeaveDayController::class, 'destroy'])
-                ->name('availability.leave-days.destroy');
+            Route::patch(
+                '/availability/leave-days/{leaveDay}',
+                [
+                    CounsellorLeaveDayController::class,
+                    'update',
+                ]
+            )->name(
+                'availability.leave-days.update'
+            );
 
-            Route::get('/appointments', [CounsellorAppointmentController::class, 'index'])
-                ->name('appointments.index');
+            Route::delete(
+                '/availability/leave-days/{leaveDay}',
+                [
+                    CounsellorLeaveDayController::class,
+                    'destroy',
+                ]
+            )->name(
+                'availability.leave-days.destroy'
+            );
 
-            Route::patch('/appointments/{appointment}/confirm', [CounsellorAppointmentController::class, 'confirm'])
-                ->name('appointments.confirm');
+            /*
+            |--------------------------------------------------------------------------
+            | Appointments
+            |--------------------------------------------------------------------------
+            */
 
-            Route::patch('/appointments/{appointment}/complete', [CounsellorAppointmentController::class, 'complete'])
-                ->name('appointments.complete');
+            Route::get(
+                '/appointments',
+                [
+                    CounsellorAppointmentController::class,
+                    'index',
+                ]
+            )->name('appointments.index');
 
-            Route::patch('/appointments/{appointment}/no-show', [CounsellorAppointmentController::class, 'noShow'])
-                ->name('appointments.no-show');
+            Route::patch(
+                '/appointments/{appointment}/confirm',
+                [
+                    CounsellorAppointmentController::class,
+                    'confirm',
+                ]
+            )->name(
+                'appointments.confirm'
+            );
 
-            Route::get('/intakes', [IntakeReviewController::class, 'counsellorIndex'])
-                ->name('intakes.index');
+            Route::patch(
+                '/appointments/{appointment}/complete',
+                [
+                    CounsellorAppointmentController::class,
+                    'complete',
+                ]
+            )->name(
+                'appointments.complete'
+            );
 
-            Route::patch('/intakes/{intake}/review', [IntakeReviewController::class, 'counsellorReview'])
-                ->name('intakes.review');
+            Route::patch(
+                '/appointments/{appointment}/no-show',
+                [
+                    CounsellorAppointmentController::class,
+                    'noShow',
+                ]
+            )->name(
+                'appointments.no-show'
+            );
 
-            Route::get('/sessions', [CounsellorSessionController::class, 'index'])
-                ->name('sessions.index');
+            /*
+            |--------------------------------------------------------------------------
+            | Intake Review
+            |--------------------------------------------------------------------------
+            */
 
-            Route::post('/sessions/appointments/{appointment}/start', [CounsellorSessionController::class, 'start'])
-                ->name('sessions.start');
+            Route::get(
+                '/intakes',
+                [
+                    IntakeReviewController::class,
+                    'counsellorIndex',
+                ]
+            )->name('intakes.index');
 
-            Route::post('/sessions/{session}/notes', [CounsellorSessionController::class, 'storeNote'])
-                ->name('sessions.notes.store');
+            Route::patch(
+                '/intakes/{intake}/review',
+                [
+                    IntakeReviewController::class,
+                    'counsellorReview',
+                ]
+            )->name('intakes.review');
 
-            Route::patch('/sessions/{session}/complete', [CounsellorSessionController::class, 'complete'])
-                ->name('sessions.complete');
+            /*
+            |--------------------------------------------------------------------------
+            | Session Delivery
+            |--------------------------------------------------------------------------
+            */
 
-            Route::middleware('permission:clinical.records.manage')
-                ->group(function () {
-                    Route::get(
-                        '/cases',
-                        [CounsellorCaseController::class, 'index']
-                    )->name('cases.index');
+            Route::get(
+                '/sessions',
+                [
+                    CounsellorSessionController::class,
+                    'index',
+                ]
+            )->name('sessions.index');
 
-                    Route::post(
-                        '/cases',
-                        [CounsellorCaseController::class, 'store']
-                    )->name('cases.store');
+            Route::post(
+                '/sessions/appointments/{appointment}/start',
+                [
+                    CounsellorSessionController::class,
+                    'start',
+                ]
+            )->name(
+                'sessions.start'
+            );
 
-                    Route::get(
-                        '/cases/{case}',
-                        [CounsellorCaseController::class, 'show']
-                    )->name('cases.show');
+            Route::post(
+                '/sessions/{session}/notes',
+                [
+                    CounsellorSessionController::class,
+                    'storeNote',
+                ]
+            )->name(
+                'sessions.notes.store'
+            );
 
-                    Route::patch(
-                        '/cases/{case}',
-                        [CounsellorCaseController::class, 'update']
-                    )->name('cases.update');
+            Route::patch(
+                '/sessions/{session}/complete',
+                [
+                    CounsellorSessionController::class,
+                    'complete',
+                ]
+            )->name(
+                'sessions.complete'
+            );
 
-                    Route::patch(
-                        '/cases/{case}/close',
-                        [CounsellorCaseController::class, 'close']
-                    )->name('cases.close');
+            /*
+            |--------------------------------------------------------------------------
+            | Clinical Cases
+            |--------------------------------------------------------------------------
+            */
 
-                    Route::post(
-                        '/cases/{case}/goals',
-                        [CounsellorCaseController::class, 'storeGoal']
-                    )->name('cases.goals.store');
+            Route::middleware(
+                'permission:clinical.records.manage'
+            )->group(function (): void {
+                Route::get(
+                    '/cases',
+                    [
+                        CounsellorCaseController::class,
+                        'index',
+                    ]
+                )->name('cases.index');
 
-                    Route::patch(
-                        '/cases/{case}/goals/{goal}',
-                        [CounsellorCaseController::class, 'updateGoal']
-                    )->name('cases.goals.update');
+                Route::post(
+                    '/cases',
+                    [
+                        CounsellorCaseController::class,
+                        'store',
+                    ]
+                )->name('cases.store');
 
-                    Route::post(
-                        '/cases/{case}/follow-ups',
-                        [CounsellorCaseController::class, 'storeFollowUp']
-                    )->name('cases.follow-ups.store');
+                Route::get(
+                    '/cases/{case}',
+                    [
+                        CounsellorCaseController::class,
+                        'show',
+                    ]
+                )->name('cases.show');
 
-                    Route::patch(
-                        '/cases/{case}/follow-ups/{followUp}',
-                        [CounsellorCaseController::class, 'updateFollowUp']
-                    )->name('cases.follow-ups.update');
+                Route::patch(
+                    '/cases/{case}',
+                    [
+                        CounsellorCaseController::class,
+                        'update',
+                    ]
+                )->name('cases.update');
 
-                    Route::post(
-                        '/cases/{case}/notes',
-                        [CounsellorCaseController::class, 'storeNote']
-                    )->name('cases.notes.store');
+                Route::patch(
+                    '/cases/{case}/close',
+                    [
+                        CounsellorCaseController::class,
+                        'close',
+                    ]
+                )->name('cases.close');
 
-                    Route::patch(
-                        '/cases/{case}/notes/{note}',
-                        [CounsellorCaseController::class, 'updateNote']
-                    )->name('cases.notes.update');
+                Route::post(
+                    '/cases/{case}/goals',
+                    [
+                        CounsellorCaseController::class,
+                        'storeGoal',
+                    ]
+                )->name(
+                    'cases.goals.store'
+                );
 
-                    Route::patch(
-                        '/cases/{case}/notes/{note}/sign',
-                        [CounsellorCaseController::class, 'signNote']
-                    )->name('cases.notes.sign');
+                Route::patch(
+                    '/cases/{case}/goals/{goal}',
+                    [
+                        CounsellorCaseController::class,
+                        'updateGoal',
+                    ]
+                )->name(
+                    'cases.goals.update'
+                );
 
-                    Route::get(
-                        '/cases/{case}/notes/{note}/versions',
-                        [CounsellorCaseController::class, 'noteVersions']
-                    )->name('cases.notes.versions');
-                });
+                Route::post(
+                    '/cases/{case}/follow-ups',
+                    [
+                        CounsellorCaseController::class,
+                        'storeFollowUp',
+                    ]
+                )->name(
+                    'cases.follow-ups.store'
+                );
+
+                Route::patch(
+                    '/cases/{case}/follow-ups/{followUp}',
+                    [
+                        CounsellorCaseController::class,
+                        'updateFollowUp',
+                    ]
+                )->name(
+                    'cases.follow-ups.update'
+                );
+
+                Route::post(
+                    '/cases/{case}/notes',
+                    [
+                        CounsellorCaseController::class,
+                        'storeNote',
+                    ]
+                )->name(
+                    'cases.notes.store'
+                );
+
+                Route::patch(
+                    '/cases/{case}/notes/{note}',
+                    [
+                        CounsellorCaseController::class,
+                        'updateNote',
+                    ]
+                )->name(
+                    'cases.notes.update'
+                );
+
+                Route::patch(
+                    '/cases/{case}/notes/{note}/sign',
+                    [
+                        CounsellorCaseController::class,
+                        'signNote',
+                    ]
+                )->name(
+                    'cases.notes.sign'
+                );
+
+                Route::get(
+                    '/cases/{case}/notes/{note}/versions',
+                    [
+                        CounsellorCaseController::class,
+                        'noteVersions',
+                    ]
+                )->name(
+                    'cases.notes.versions'
+                );
+            });
+
+            /*
+            |--------------------------------------------------------------------------
+            | Counsellor Documents
+            |--------------------------------------------------------------------------
+            */
 
             Route::middleware(
                 'permission:documents.case.manage'
@@ -368,32 +806,58 @@ Route::middleware(['auth', 'active'])->group(function () {
                     'documents.destroy'
                 );
             });
-
         });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Client Routes
+    |--------------------------------------------------------------------------
+    */
 
     Route::prefix('client')
         ->name('client.')
         ->middleware('role:client')
-        ->group(function () {
+        ->group(function (): void {
             Route::get(
                 '/dashboard',
                 ClientDashboardController::class
             )->name('dashboard');
 
-            Route::get('/profile', [
-                ClientProfileController::class,
-                'show',
-            ])->name('profile.show');
+            /*
+            |--------------------------------------------------------------------------
+            | Client Profile
+            |--------------------------------------------------------------------------
+            */
 
-            Route::get('/profile/edit', [
-                ClientProfileController::class,
-                'edit',
-            ])->name('profile.edit');
+            Route::get(
+                '/profile',
+                [
+                    ClientProfileController::class,
+                    'show',
+                ]
+            )->name('profile.show');
 
-            Route::patch('/profile', [
-                ClientProfileController::class,
-                'update',
-            ])->name('profile.update');
+            Route::get(
+                '/profile/edit',
+                [
+                    ClientProfileController::class,
+                    'edit',
+                ]
+            )->name('profile.edit');
+
+            Route::patch(
+                '/profile',
+                [
+                    ClientProfileController::class,
+                    'update',
+                ]
+            )->name('profile.update');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Emergency Contacts
+            |--------------------------------------------------------------------------
+            */
 
             Route::resource(
                 'emergency-contacts',
@@ -402,71 +866,209 @@ Route::middleware(['auth', 'active'])->group(function () {
                 'show',
             ]);
 
-            Route::get('/preferences', [
-                ClientPreferenceController::class,
-                'show',
-            ])->name('preferences.show');
+            /*
+            |--------------------------------------------------------------------------
+            | Preferences
+            |--------------------------------------------------------------------------
+            */
 
-            Route::get('/preferences/edit', [
-                ClientPreferenceController::class,
-                'edit',
-            ])->name('preferences.edit');
+            Route::get(
+                '/preferences',
+                [
+                    ClientPreferenceController::class,
+                    'show',
+                ]
+            )->name(
+                'preferences.show'
+            );
 
-            Route::patch('/preferences', [
-                ClientPreferenceController::class,
-                'update',
-            ])->name('preferences.update');
+            Route::get(
+                '/preferences/edit',
+                [
+                    ClientPreferenceController::class,
+                    'edit',
+                ]
+            )->name(
+                'preferences.edit'
+            );
 
-            Route::get('/privacy', [
-                ClientPrivacySettingsController::class,
-                'show',
-            ])->name('privacy.show');
+            Route::patch(
+                '/preferences',
+                [
+                    ClientPreferenceController::class,
+                    'update',
+                ]
+            )->name(
+                'preferences.update'
+            );
 
-            Route::get('/privacy/edit', [
-                ClientPrivacySettingsController::class,
-                'edit',
-            ])->name('privacy.edit');
+            /*
+            |--------------------------------------------------------------------------
+            | Privacy
+            |--------------------------------------------------------------------------
+            */
 
-            Route::patch('/privacy', [
-                ClientPrivacySettingsController::class,
-                'update',
-            ])->name('privacy.update');
+            Route::get(
+                '/privacy',
+                [
+                    ClientPrivacySettingsController::class,
+                    'show',
+                ]
+            )->name('privacy.show');
 
-            Route::get('/counsellors', [CounsellorDiscoveryController::class, 'index'])
-                ->name('counsellors.index');
+            Route::get(
+                '/privacy/edit',
+                [
+                    ClientPrivacySettingsController::class,
+                    'edit',
+                ]
+            )->name('privacy.edit');
 
-            Route::get('/counsellors/{counsellor}', [CounsellorDiscoveryController::class, 'show'])
-                ->name('counsellors.show');
+            Route::patch(
+                '/privacy',
+                [
+                    ClientPrivacySettingsController::class,
+                    'update',
+                ]
+            )->name('privacy.update');
 
-            Route::get('/counsellors/{counsellor}/appointment-slots', [ClientAppointmentSlotController::class, 'index'])
-                ->name('counsellors.appointment-slots.index');
+            /*
+            |--------------------------------------------------------------------------
+            | Counsellor Discovery
+            |--------------------------------------------------------------------------
+            */
 
-            Route::get('/appointments', [ClientAppointmentController::class, 'index'])
-                ->name('appointments.index');
+            Route::get(
+                '/counsellors',
+                [
+                    CounsellorDiscoveryController::class,
+                    'index',
+                ]
+            )->name(
+                'counsellors.index'
+            );
 
-            Route::post('/appointments', [ClientAppointmentController::class, 'store'])
-                ->name('appointments.store');
+            Route::get(
+                '/counsellors/{counsellor}',
+                [
+                    CounsellorDiscoveryController::class,
+                    'show',
+                ]
+            )->name(
+                'counsellors.show'
+            );
 
-            Route::get('/appointments/{appointment}/reschedule-slots', [ClientAppointmentController::class, 'rescheduleSlots'])
-                ->name('appointments.reschedule-slots');
+            Route::get(
+                '/counsellors/{counsellor}/appointment-slots',
+                [
+                    ClientAppointmentSlotController::class,
+                    'index',
+                ]
+            )->name(
+                'counsellors.appointment-slots.index'
+            );
 
-            Route::patch('/appointments/{appointment}/reschedule', [ClientAppointmentController::class, 'reschedule'])
-                ->name('appointments.reschedule');
+            /*
+            |--------------------------------------------------------------------------
+            | Appointments
+            |--------------------------------------------------------------------------
+            */
 
-            Route::patch('/appointments/{appointment}/cancel', [ClientAppointmentController::class, 'cancel'])
-                ->name('appointments.cancel');
+            Route::get(
+                '/appointments',
+                [
+                    ClientAppointmentController::class,
+                    'index',
+                ]
+            )->name('appointments.index');
 
-            Route::get('/intake', [ClientIntakeController::class, 'edit'])
-                ->name('intake.edit');
+            Route::post(
+                '/appointments',
+                [
+                    ClientAppointmentController::class,
+                    'store',
+                ]
+            )->name('appointments.store');
 
-            Route::patch('/intake', [ClientIntakeController::class, 'update'])
-                ->name('intake.update');
+            Route::get(
+                '/appointments/{appointment}/reschedule-slots',
+                [
+                    ClientAppointmentController::class,
+                    'rescheduleSlots',
+                ]
+            )->name(
+                'appointments.reschedule-slots'
+            );
 
-            Route::post('/intake/submit', [ClientIntakeController::class, 'submit'])
-                ->name('intake.submit');
+            Route::patch(
+                '/appointments/{appointment}/reschedule',
+                [
+                    ClientAppointmentController::class,
+                    'reschedule',
+                ]
+            )->name(
+                'appointments.reschedule'
+            );
 
-            Route::get('/sessions', [ClientSessionController::class, 'index'])
-                ->name('sessions.index');
+            Route::patch(
+                '/appointments/{appointment}/cancel',
+                [
+                    ClientAppointmentController::class,
+                    'cancel',
+                ]
+            )->name(
+                'appointments.cancel'
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Intake
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/intake',
+                [
+                    ClientIntakeController::class,
+                    'edit',
+                ]
+            )->name('intake.edit');
+
+            Route::patch(
+                '/intake',
+                [
+                    ClientIntakeController::class,
+                    'update',
+                ]
+            )->name('intake.update');
+
+            Route::post(
+                '/intake/submit',
+                [
+                    ClientIntakeController::class,
+                    'submit',
+                ]
+            )->name('intake.submit');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Sessions
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/sessions',
+                [
+                    ClientSessionController::class,
+                    'index',
+                ]
+            )->name('sessions.index');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Client Documents
+            |--------------------------------------------------------------------------
+            */
 
             Route::middleware(
                 'permission:documents.client.manage'
@@ -512,14 +1114,103 @@ Route::middleware(['auth', 'active'])->group(function () {
                 );
             });
 
+            /*
+            |--------------------------------------------------------------------------
+            | M14 - Client Payments, Invoices & Refunds
+            |--------------------------------------------------------------------------
+            */
+
+            Route::middleware(
+                'permission:payments.client.manage'
+            )->group(function (): void {
+                Route::get(
+                    '/payments',
+                    [
+                        ClientPaymentController::class,
+                        'index',
+                    ]
+                )->name(
+                    'payments.index'
+                );
+
+                Route::post(
+                    '/appointments/{appointment}/payments',
+                    [
+                        ClientPaymentController::class,
+                        'store',
+                    ]
+                )->name(
+                    'payments.store'
+                );
+
+                Route::get(
+                    '/payments/{payment}/checkout',
+                    [
+                        ClientPaymentController::class,
+                        'checkout',
+                    ]
+                )->name(
+                    'payments.checkout'
+                );
+
+                Route::post(
+                    '/payments/{payment}/sandbox',
+                    [
+                        ClientPaymentController::class,
+                        'completeSandbox',
+                    ]
+                )->name(
+                    'payments.sandbox.complete'
+                );
+
+                Route::get(
+                    '/payments/{payment}/invoice',
+                    [
+                        ClientPaymentController::class,
+                        'invoice',
+                    ]
+                )->name(
+                    'payments.invoice'
+                );
+
+                Route::get(
+                    '/payments/{payment}/receipt',
+                    [
+                        ClientPaymentController::class,
+                        'receipt',
+                    ]
+                )->name(
+                    'payments.receipt'
+                );
+
+                Route::post(
+                    '/payments/{payment}/refunds',
+                    [
+                        ClientRefundController::class,
+                        'store',
+                    ]
+                )->name(
+                    'payments.refunds.store'
+                );
+            });
         });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Clinical Supervisor Routes
+    |--------------------------------------------------------------------------
+    */
 
     Route::middleware([
         'verified',
         'permission:clinical.records.review',
     ])
-        ->prefix('clinical-supervisor')
-        ->name('clinical-supervisor.')
+        ->prefix(
+            'clinical-supervisor'
+        )
+        ->name(
+            'clinical-supervisor.'
+        )
         ->group(function (): void {
             Route::get(
                 '/cases',
@@ -543,7 +1234,9 @@ Route::middleware(['auth', 'active'])->group(function () {
                     ClinicalSupervisorCaseController::class,
                     'noteVersions',
                 ]
-            )->name('cases.notes.versions');
+            )->name(
+                'cases.notes.versions'
+            );
 
             Route::middleware(
                 'permission:documents.case.review'
@@ -570,20 +1263,176 @@ Route::middleware(['auth', 'active'])->group(function () {
             });
         });
 
-    Route::get('/profile', [
-        ProfileController::class,
-        'edit',
-    ])->name('profile.edit');
+    /*
+    |--------------------------------------------------------------------------
+    | M14 - Finance Admin
+    |--------------------------------------------------------------------------
+    |
+    | Finance Admin is deliberately separated from the normal admin route
+    | group. Holding dashboard.admin.view must never grant access to financial
+    | transactions, and holding finance permissions must never grant access to
+    | confidential clinical records.
+    |
+    */
 
-    Route::patch('/profile', [
-        ProfileController::class,
-        'update',
-    ])->name('profile.update');
+    Route::prefix('finance')
+        ->name('finance.')
+        ->middleware(
+            'permission:payments.finance.view'
+        )
+        ->group(function (): void {
+            /*
+            |--------------------------------------------------------------------------
+            | Payment Oversight
+            |--------------------------------------------------------------------------
+            */
 
-    Route::delete('/profile', [
-        ProfileController::class,
-        'destroy',
-    ])->name('profile.destroy');
+            Route::get(
+                '/payments',
+                [
+                    FinancePaymentController::class,
+                    'index',
+                ]
+            )->name(
+                'payments.index'
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Manual Payments
+            |--------------------------------------------------------------------------
+            */
+
+            Route::post(
+                '/payments/manual',
+                [
+                    FinancePaymentController::class,
+                    'storeManual',
+                ]
+            )
+                ->middleware(
+                    'permission:payments.finance.manage'
+                )
+                ->name(
+                    'payments.manual.store'
+                );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Reconciliation
+            |--------------------------------------------------------------------------
+            */
+
+            Route::patch(
+                '/payments/{payment}/reconcile',
+                [
+                    FinancePaymentController::class,
+                    'reconcile',
+                ]
+            )
+                ->middleware(
+                    'permission:payments.reconciliation.manage'
+                )
+                ->name(
+                    'payments.reconcile'
+                );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Financial Documents
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/payments/{payment}/invoice',
+                [
+                    FinancePaymentController::class,
+                    'invoice',
+                ]
+            )->name(
+                'payments.invoice'
+            );
+
+            Route::get(
+                '/payments/{payment}/receipt',
+                [
+                    FinancePaymentController::class,
+                    'receipt',
+                ]
+            )->name(
+                'payments.receipt'
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Refund Management
+            |--------------------------------------------------------------------------
+            */
+
+            Route::middleware(
+                'permission:payments.refunds.manage'
+            )->group(function (): void {
+                Route::get(
+                    '/refunds',
+                    [
+                        FinanceRefundController::class,
+                        'index',
+                    ]
+                )->name(
+                    'refunds.index'
+                );
+
+                Route::patch(
+                    '/refunds/{refund}/decision',
+                    [
+                        FinanceRefundController::class,
+                        'decide',
+                    ]
+                )->name(
+                    'refunds.decide'
+                );
+
+                Route::patch(
+                    '/refunds/{refund}/process',
+                    [
+                        FinanceRefundController::class,
+                        'process',
+                    ]
+                )->name(
+                    'refunds.process'
+                );
+            });
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Shared User Profile
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get(
+        '/profile',
+        [
+            ProfileController::class,
+            'edit',
+        ]
+    )->name('profile.edit');
+
+    Route::patch(
+        '/profile',
+        [
+            ProfileController::class,
+            'update',
+        ]
+    )->name('profile.update');
+
+    Route::delete(
+        '/profile',
+        [
+            ProfileController::class,
+            'destroy',
+        ]
+    )->name('profile.destroy');
 });
 
 require __DIR__.'/auth.php';

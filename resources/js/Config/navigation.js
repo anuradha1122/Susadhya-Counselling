@@ -18,6 +18,8 @@ import {
     Tags,
     UserRoundCog,
     Users,
+    ReceiptText,
+    RotateCcw,
 } from "lucide-react";
 
 export const adminNavigation = [
@@ -239,10 +241,25 @@ export const clientNavigation = [
         icon: FileText,
         permission: "documents.client.manage",
     },
+    {
+        label: "My Payments",
+        routeName: "client.payments.index",
+        icon: ReceiptText,
+        permission: "payments.client.manage",
+    },
+];
 
+export const financeNavigation = [
     {
         label: "Payments",
+        routeName: "finance.payments.index",
         icon: CircleDollarSign,
-        disabled: true,
+        permission: "payments.finance.view",
+    },
+    {
+        label: "Refunds",
+        routeName: "finance.refunds.index",
+        icon: RotateCcw,
+        permission: "payments.refunds.manage",
     },
 ];

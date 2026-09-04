@@ -27,6 +27,11 @@ class DashboardRedirectController extends Controller
                 ->route('client.dashboard');
         }
 
+        if ($user->hasRole('finance_admin')) {
+            return redirect()->route(
+                'finance.payments.index'
+            );
+        }
         abort(
             403,
             'No dashboard has been assigned to this account.'

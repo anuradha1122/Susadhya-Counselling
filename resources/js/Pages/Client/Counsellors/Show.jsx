@@ -2,24 +2,56 @@ import InputError from "@/Components/InputError";
 import PrimaryButton from "@/Components/PrimaryButton";
 import SecondaryButton from "@/Components/SecondaryButton";
 import ClientLayout from "@/Layouts/ClientLayout";
-import { Head, Link, useForm } from "@inertiajs/react";
-import { useEffect, useState } from "react";
+import {
+    Head,
+    Link,
+    useForm,
+} from "@inertiajs/react";
+import {
+    useEffect,
+    useMemo,
+    useState,
+} from "react";
 
 function formatValue(value) {
-    if (value === null || value === undefined || value === "") {
+    if (
+        value === null ||
+        value === undefined ||
+        value === ""
+    ) {
         return "Not provided";
     }
 
     return String(value)
         .replaceAll("_", " ")
-        .replace(/\b\w/g, (character) => character.toUpperCase());
+        .replace(
+            /\b\w/g,
+            (character) =>
+                character.toUpperCase(),
+        );
 }
 
 function todayForInput() {
     const now = new Date();
-    const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
 
-    return localDate.toISOString().slice(0, 10);
+    const localDate = new Date(
+        now.getTime() -
+            now.getTimezoneOffset() *
+                60000,
+    );
+
+    return localDate
+        .toISOString()
+        .slice(0, 10);
+}
+
+function money(
+    amount,
+    currency = "LKR",
+) {
+    return `${currency} ${Number(
+        amount ?? 0,
+    ).toFixed(2)}`;
 }
 
 function Pill({ children }) {
@@ -38,28 +70,42 @@ function MutedPill({ children }) {
     );
 }
 
-function SectionCard({ title, description, children }) {
+function SectionCard({
+    title,
+    description,
+    children,
+}) {
     return (
         <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
             <div className="border-b border-gray-100 px-6 py-4">
-                <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                    {title}
+                </h3>
 
                 {description && (
-                    <p className="mt-1 text-sm text-gray-500">{description}</p>
+                    <p className="mt-1 text-sm text-gray-500">
+                        {description}
+                    </p>
                 )}
             </div>
 
-            <div className="p-6">{children}</div>
+            <div className="p-6">
+                {children}
+            </div>
         </div>
     );
 }
 
-function DetailStat({ label, value }) {
+function DetailStat({
+    label,
+    value,
+}) {
     return (
         <div className="rounded-lg bg-gray-50 p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
                 {label}
             </p>
+
             <p className="mt-1 text-base font-semibold text-gray-900">
                 {formatValue(value)}
             </p>
@@ -67,98 +113,156 @@ function DetailStat({ label, value }) {
     );
 }
 
-function AvailabilitySection({ availability }) {
-    if (!availability || availability.length === 0) {
+function AvailabilitySection({
+    availability,
+}) {
+    if (
+        !availability ||
+        availability.length === 0
+    ) {
         return (
             <p className="text-sm text-gray-500">
-                This counsellor has not published availability yet.
+                This counsellor has not
+                published availability
+                yet.
             </p>
         );
     }
 
     return (
         <div className="space-y-5">
-            {availability.map((day) => (
-                <div
-                    key={day.day_of_week}
-                    className="rounded-lg border border-gray-200 p-4"
-                >
-                    <h4 className="text-base font-semibold text-gray-900">
-                        {day.day_name}
-                    </h4>
+            {availability.map(
+                (day) => (
+                    <div
+                        key={
+                            day.day_of_week
+                        }
+                        className="rounded-lg border border-gray-200 p-4"
+                    >
+                        <h4 className="text-base font-semibold text-gray-900">
+                            {day.day_name}
+                        </h4>
 
-                    <div className="mt-3 space-y-3">
-                        {day.slots.map((slot) => (
-                            <div
-                                key={slot.id}
-                                className="rounded-lg bg-gray-50 p-4"
-                            >
-                                <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                                    <div>
-                                        <p className="font-semibold text-gray-900">
-                                            {slot.start_time} - {slot.end_time}
-                                        </p>
+                        <div className="mt-3 space-y-3">
+                            {day.slots.map(
+                                (slot) => (
+                                    <div
+                                        key={
+                                            slot.id
+                                        }
+                                        className="rounded-lg bg-gray-50 p-4"
+                                    >
+                                        <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+                                            <div>
+                                                <p className="font-semibold text-gray-900">
+                                                    {
+                                                        slot.start_time
+                                                    }{" "}
+                                                    -{" "}
+                                                    {
+                                                        slot.end_time
+                                                    }
+                                                </p>
 
-                                        <p className="mt-1 text-sm text-gray-600">
-                                            {formatValue(slot.mode)} ·{" "}
-                                            {slot.slot_duration_minutes} minute
-                                            sessions · {slot.capacity_per_slot}{" "}
-                                            per slot
-                                        </p>
+                                                <p className="mt-1 text-sm text-gray-600">
+                                                    {formatValue(
+                                                        slot.mode,
+                                                    )}{" "}
+                                                    ·{" "}
+                                                    {
+                                                        slot.slot_duration_minutes
+                                                    }{" "}
+                                                    minute
+                                                    sessions
+                                                    ·{" "}
+                                                    {
+                                                        slot.capacity_per_slot
+                                                    }{" "}
+                                                    per
+                                                    slot
+                                                </p>
 
-                                        <p className="mt-1 text-xs text-gray-500">
-                                            Buffer: {slot.buffer_minutes} mins ·
-                                            Timezone: {slot.timezone}
-                                        </p>
-                                    </div>
+                                                <p className="mt-1 text-xs text-gray-500">
+                                                    Buffer:{" "}
+                                                    {
+                                                        slot.buffer_minutes
+                                                    }{" "}
+                                                    mins ·
+                                                    Timezone:{" "}
+                                                    {
+                                                        slot.timezone
+                                                    }
+                                                </p>
+                                            </div>
 
-                                    <MutedPill>Published</MutedPill>
-                                </div>
-
-                                {slot.breaks.length > 0 && (
-                                    <div className="mt-4 border-t border-gray-200 pt-3">
-                                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                            Breaks
-                                        </p>
-
-                                        <div className="mt-2 flex flex-wrap gap-2">
-                                            {slot.breaks.map(
-                                                (availabilityBreak) => (
-                                                    <MutedPill
-                                                        key={
-                                                            availabilityBreak.id
-                                                        }
-                                                    >
-                                                        {
-                                                            availabilityBreak.title
-                                                        }
-                                                        :{" "}
-                                                        {
-                                                            availabilityBreak.start_time
-                                                        }{" "}
-                                                        -{" "}
-                                                        {
-                                                            availabilityBreak.end_time
-                                                        }
-                                                    </MutedPill>
-                                                ),
-                                            )}
+                                            <MutedPill>
+                                                Published
+                                            </MutedPill>
                                         </div>
+
+                                        {(slot.breaks ??
+                                            [])
+                                            .length >
+                                            0 && (
+                                            <div className="mt-4 border-t border-gray-200 pt-3">
+                                                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                                    Breaks
+                                                </p>
+
+                                                <div className="mt-2 flex flex-wrap gap-2">
+                                                    {slot.breaks.map(
+                                                        (
+                                                            availabilityBreak,
+                                                        ) => (
+                                                            <MutedPill
+                                                                key={
+                                                                    availabilityBreak.id
+                                                                }
+                                                            >
+                                                                {
+                                                                    availabilityBreak.title
+                                                                }
+                                                                :{" "}
+                                                                {
+                                                                    availabilityBreak.start_time
+                                                                }{" "}
+                                                                -{" "}
+                                                                {
+                                                                    availabilityBreak.end_time
+                                                                }
+                                                            </MutedPill>
+                                                        ),
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
-                                )}
-                            </div>
-                        ))}
+                                ),
+                            )}
+                        </div>
                     </div>
-                </div>
-            ))}
+                ),
+            )}
         </div>
     );
 }
 
-function BookingPanel({ counsellor }) {
-    const [slots, setSlots] = useState([]);
-    const [loadingSlots, setLoadingSlots] = useState(false);
-    const [slotError, setSlotError] = useState("");
+function BookingPanel({
+    counsellor,
+    services,
+}) {
+    const [slots, setSlots] =
+        useState([]);
+
+    const [
+        loadingSlots,
+        setLoadingSlots,
+    ] = useState(false);
+
+    const [
+        slotError,
+        setSlotError,
+    ] = useState("");
 
     const {
         data,
@@ -166,35 +270,130 @@ function BookingPanel({ counsellor }) {
         post,
         processing,
         errors,
-        recentlySuccessful,
         reset,
     } = useForm({
-        counsellor_profile_id: counsellor.id,
-        counselling_service_id: "",
-        appointment_date: todayForInput(),
+        counsellor_profile_id:
+            counsellor.id,
+
+        counselling_service_id:
+            "",
+
+        appointment_date:
+            todayForInput(),
+
         start_time: "",
+
         end_time: "",
+
         mode: "online",
+
         client_notes: "",
     });
 
+    const selectedService =
+        useMemo(
+            () =>
+                services.find(
+                    (service) =>
+                        String(
+                            service.id,
+                        ) ===
+                        String(
+                            data.counselling_service_id,
+                        ),
+                ) ?? null,
+            [
+                services,
+                data.counselling_service_id,
+            ],
+        );
+
+    const modeOptions =
+        useMemo(() => {
+            if (!selectedService) {
+                return [
+                    {
+                        value:
+                            "online",
+                        label:
+                            "Online",
+                    },
+                    {
+                        value:
+                            "in_person",
+                        label:
+                            "In person",
+                    },
+                ];
+            }
+
+            if (
+                selectedService.service_mode ===
+                "online"
+            ) {
+                return [
+                    {
+                        value:
+                            "online",
+                        label:
+                            "Online",
+                    },
+                ];
+            }
+
+            if (
+                selectedService.service_mode ===
+                "in_person"
+            ) {
+                return [
+                    {
+                        value:
+                            "in_person",
+                        label:
+                            "In person",
+                    },
+                ];
+            }
+
+            return [
+                {
+                    value: "online",
+                    label: "Online",
+                },
+                {
+                    value:
+                        "in_person",
+                    label:
+                        "In person",
+                },
+            ];
+        }, [selectedService]);
+
     useEffect(() => {
-        if (!data.appointment_date || !data.mode) {
+        if (
+            !data.counselling_service_id ||
+            !data.appointment_date ||
+            !data.mode
+        ) {
             setSlots([]);
+
             return;
         }
 
-        const controller = new AbortController();
+        const controller =
+            new AbortController();
 
         setLoadingSlots(true);
-        setSlotError("");
-        setData("start_time", "");
-        setData("end_time", "");
 
-        const parameters = new URLSearchParams({
-            appointment_date: data.appointment_date,
-            mode: data.mode,
-        });
+        setSlotError("");
+
+        const parameters =
+            new URLSearchParams({
+                appointment_date:
+                    data.appointment_date,
+
+                mode: data.mode,
+            });
 
         fetch(
             `${route(
@@ -203,84 +402,352 @@ function BookingPanel({ counsellor }) {
             )}?${parameters.toString()}`,
             {
                 headers: {
-                    Accept: "application/json",
+                    Accept:
+                        "application/json",
                 },
-                signal: controller.signal,
+
+                signal:
+                    controller.signal,
             },
         )
-            .then(async (response) => {
-                if (!response.ok) {
-                    throw new Error("Unable to load available slots.");
-                }
+            .then(
+                async (
+                    response,
+                ) => {
+                    if (
+                        !response.ok
+                    ) {
+                        throw new Error(
+                            "Unable to load available slots.",
+                        );
+                    }
 
-                return response.json();
-            })
-            .then((payload) => {
-                setSlots(payload.slots ?? []);
-            })
+                    return response.json();
+                },
+            )
+            .then(
+                (payload) => {
+                    setSlots(
+                        payload.slots ??
+                            [],
+                    );
+                },
+            )
             .catch((error) => {
-                if (error.name === "AbortError") {
+                if (
+                    error.name ===
+                    "AbortError"
+                ) {
                     return;
                 }
 
                 setSlots([]);
+
                 setSlotError(
                     "Available slots could not be loaded. Please try another date or mode.",
                 );
             })
             .finally(() => {
-                setLoadingSlots(false);
+                setLoadingSlots(
+                    false,
+                );
             });
 
-        return () => controller.abort();
-    }, [counsellor.id, data.appointment_date, data.mode]);
+        return () =>
+            controller.abort();
+    }, [
+        counsellor.id,
+        data.counselling_service_id,
+        data.appointment_date,
+        data.mode,
+    ]);
+
+    const clearSelectedSlot =
+        () => {
+            setData(
+                "start_time",
+                "",
+            );
+
+            setData(
+                "end_time",
+                "",
+            );
+
+            setSlots([]);
+        };
+
+    const handleServiceChange =
+        (event) => {
+            const value =
+                event.target.value;
+
+            const service =
+                services.find(
+                    (item) =>
+                        String(
+                            item.id,
+                        ) ===
+                        String(value),
+                ) ?? null;
+
+            setData(
+                "counselling_service_id",
+                value,
+            );
+
+            setData(
+                "start_time",
+                "",
+            );
+
+            setData(
+                "end_time",
+                "",
+            );
+
+            setSlots([]);
+
+            if (
+                service &&
+                service.service_mode !==
+                    "both"
+            ) {
+                setData(
+                    "mode",
+                    service.service_mode,
+                );
+            }
+        };
+
+    const handleDateChange =
+        (event) => {
+            setData(
+                "appointment_date",
+                event.target.value,
+            );
+
+            clearSelectedSlot();
+        };
+
+    const handleModeChange =
+        (event) => {
+            setData(
+                "mode",
+                event.target.value,
+            );
+
+            clearSelectedSlot();
+        };
 
     const selectSlot = (slot) => {
-        setData("start_time", slot.start_time);
-        setData("end_time", slot.end_time);
+        setData(
+            "start_time",
+            slot.start_time,
+        );
+
+        setData(
+            "end_time",
+            slot.end_time,
+        );
     };
 
     const submit = (event) => {
         event.preventDefault();
 
-        post(route("client.appointments.store"), {
-            preserveScroll: true,
-            onSuccess: () => {
-                reset("start_time", "end_time", "client_notes");
+        post(
+            route(
+                "client.appointments.store",
+            ),
+            {
+                preserveScroll:
+                    true,
+
+                onSuccess: () => {
+                    reset(
+                        "start_time",
+                        "end_time",
+                        "client_notes",
+                    );
+                },
             },
-        });
+        );
     };
 
-    const hasSelectedSlot = data.start_time && data.end_time;
+    const hasSelectedSlot =
+        Boolean(
+            data.start_time &&
+                data.end_time,
+        );
+
+    const canSubmit =
+        Boolean(
+            data.counselling_service_id &&
+                hasSelectedSlot,
+        );
 
     return (
         <SectionCard
             title="Book Appointment"
-            description="Choose an available date, mode, and time slot. The system rechecks the slot before saving, because calendars enjoy betrayal."
+            description="Choose a counselling service first, then select the date, mode and available time slot."
         >
-            <form onSubmit={submit} className="space-y-5">
+            <form
+                onSubmit={submit}
+                className="space-y-5"
+            >
+                {/* Service */}
+                <div>
+                    <label
+                        htmlFor="counselling_service_id"
+                        className="text-sm font-medium text-gray-700"
+                    >
+                        Counselling
+                        service
+                    </label>
+
+                    <select
+                        id="counselling_service_id"
+                        value={
+                            data.counselling_service_id
+                        }
+                        onChange={
+                            handleServiceChange
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    >
+                        <option value="">
+                            Select a
+                            counselling
+                            service
+                        </option>
+
+                        {services.map(
+                            (service) => (
+                                <option
+                                    key={
+                                        service.id
+                                    }
+                                    value={
+                                        service.id
+                                    }
+                                >
+                                    {
+                                        service.name
+                                    }{" "}
+                                    ·{" "}
+                                    {money(
+                                        service.price,
+                                        service.currency,
+                                    )}{" "}
+                                    ·{" "}
+                                    {
+                                        service.duration_minutes
+                                    }{" "}
+                                    min ·{" "}
+                                    {formatValue(
+                                        service.service_mode,
+                                    )}
+                                </option>
+                            ),
+                        )}
+                    </select>
+
+                    <InputError
+                        message={
+                            errors.counselling_service_id
+                        }
+                        className="mt-2"
+                    />
+
+                    {services.length ===
+                        0 && (
+                        <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+                            There are
+                            currently no
+                            active counselling
+                            services that match
+                            this counsellor's
+                            published
+                            availability.
+                        </div>
+                    )}
+                </div>
+
+                {/* Selected service */}
+                {selectedService && (
+                    <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                            <div>
+                                <p className="font-semibold text-indigo-950">
+                                    {
+                                        selectedService.name
+                                    }
+                                </p>
+
+                                <p className="mt-1 text-sm text-indigo-800">
+                                    {
+                                        selectedService.short_description ??
+                                        "Counselling service"
+                                    }
+                                </p>
+                            </div>
+
+                            <div className="text-sm font-semibold text-indigo-900">
+                                {money(
+                                    selectedService.price,
+                                    selectedService.currency,
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            <Pill>
+                                {
+                                    selectedService.duration_minutes
+                                }{" "}
+                                minutes
+                            </Pill>
+
+                            <Pill>
+                                {formatValue(
+                                    selectedService.service_mode,
+                                )}
+                            </Pill>
+                        </div>
+                    </div>
+                )}
+
+                {/* Date and mode */}
                 <div className="grid gap-4 md:grid-cols-2">
                     <div>
                         <label
                             htmlFor="appointment_date"
                             className="text-sm font-medium text-gray-700"
                         >
-                            Appointment date
+                            Appointment
+                            date
                         </label>
 
                         <input
                             id="appointment_date"
                             type="date"
                             min={todayForInput()}
-                            value={data.appointment_date}
-                            onChange={(event) =>
-                                setData("appointment_date", event.target.value)
+                            value={
+                                data.appointment_date
                             }
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            onChange={
+                                handleDateChange
+                            }
+                            disabled={
+                                !selectedService
+                            }
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100"
                         />
 
                         <InputError
-                            message={errors.appointment_date}
+                            message={
+                                errors.appointment_date
+                            }
                             className="mt-2"
                         />
                     </div>
@@ -290,25 +757,53 @@ function BookingPanel({ counsellor }) {
                             htmlFor="mode"
                             className="text-sm font-medium text-gray-700"
                         >
-                            Counselling mode
+                            Counselling
+                            mode
                         </label>
 
                         <select
                             id="mode"
-                            value={data.mode}
-                            onChange={(event) =>
-                                setData("mode", event.target.value)
+                            value={
+                                data.mode
                             }
-                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            onChange={
+                                handleModeChange
+                            }
+                            disabled={
+                                !selectedService
+                            }
+                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-100"
                         >
-                            <option value="online">Online</option>
-                            <option value="in_person">In person</option>
+                            {modeOptions.map(
+                                (
+                                    option,
+                                ) => (
+                                    <option
+                                        key={
+                                            option.value
+                                        }
+                                        value={
+                                            option.value
+                                        }
+                                    >
+                                        {
+                                            option.label
+                                        }
+                                    </option>
+                                ),
+                            )}
                         </select>
 
-                        <InputError message={errors.mode} className="mt-2" />
+                        <InputError
+                            message={
+                                errors.mode
+                            }
+                            className="mt-2"
+                        />
                     </div>
                 </div>
 
+                {/* Slots */}
                 <div>
                     <div className="flex items-center justify-between gap-4">
                         <p className="text-sm font-medium text-gray-700">
@@ -317,97 +812,164 @@ function BookingPanel({ counsellor }) {
 
                         {loadingSlots && (
                             <p className="text-xs text-gray-500">
-                                Loading slots...
+                                Loading
+                                slots...
                             </p>
                         )}
                     </div>
 
+                    {!selectedService && (
+                        <div className="mt-2 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600">
+                            Select a
+                            counselling
+                            service before
+                            choosing an
+                            appointment slot.
+                        </div>
+                    )}
+
                     {slotError && (
                         <div className="mt-2 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                            {slotError}
+                            {
+                                slotError
+                            }
                         </div>
                     )}
 
-                    {!loadingSlots && slots.length === 0 && !slotError && (
-                        <div className="mt-2 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600">
-                            No available slots for this date and mode. Try
-                            another day, because time remains stubbornly linear.
-                        </div>
-                    )}
+                    {selectedService &&
+                        !loadingSlots &&
+                        slots.length ===
+                            0 &&
+                        !slotError && (
+                            <div className="mt-2 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600">
+                                No available
+                                slots for
+                                this date
+                                and mode.
+                                Try another
+                                date or
+                                mode.
+                            </div>
+                        )}
 
-                    {slots.length > 0 && (
+                    {slots.length >
+                        0 && (
                         <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                            {slots.map((slot) => {
-                                const selected =
-                                    data.start_time === slot.start_time &&
-                                    data.end_time === slot.end_time;
+                            {slots.map(
+                                (
+                                    slot,
+                                ) => {
+                                    const selected =
+                                        data.start_time ===
+                                            slot.start_time &&
+                                        data.end_time ===
+                                            slot.end_time;
 
-                                return (
-                                    <button
-                                        key={`${slot.date}-${slot.start_time}-${slot.end_time}`}
-                                        type="button"
-                                        onClick={() => selectSlot(slot)}
-                                        className={`rounded-lg border p-4 text-left transition ${
-                                            selected
-                                                ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100"
-                                                : "border-gray-200 bg-white hover:border-indigo-300 hover:bg-indigo-50"
-                                        }`}
-                                    >
-                                        <p className="font-semibold text-gray-900">
-                                            {slot.start_time} - {slot.end_time}
-                                        </p>
+                                    return (
+                                        <button
+                                            key={`${slot.date}-${slot.start_time}-${slot.end_time}`}
+                                            type="button"
+                                            onClick={() =>
+                                                selectSlot(
+                                                    slot,
+                                                )
+                                            }
+                                            className={`rounded-lg border p-4 text-left transition ${
+                                                selected
+                                                    ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100"
+                                                    : "border-gray-200 bg-white hover:border-indigo-300 hover:bg-indigo-50"
+                                            }`}
+                                        >
+                                            <p className="font-semibold text-gray-900">
+                                                {
+                                                    slot.start_time
+                                                }{" "}
+                                                -{" "}
+                                                {
+                                                    slot.end_time
+                                                }
+                                            </p>
 
-                                        <p className="mt-1 text-xs text-gray-500">
-                                            {formatValue(slot.mode)} ·{" "}
-                                            {slot.timezone}
-                                        </p>
-                                    </button>
-                                );
-                            })}
+                                            <p className="mt-1 text-xs text-gray-500">
+                                                {formatValue(
+                                                    slot.mode,
+                                                )}{" "}
+                                                ·{" "}
+                                                {
+                                                    slot.timezone
+                                                }
+                                            </p>
+                                        </button>
+                                    );
+                                },
+                            )}
                         </div>
                     )}
 
-                    <InputError message={errors.start_time} className="mt-2" />
-                    <InputError message={errors.end_time} className="mt-2" />
+                    <InputError
+                        message={
+                            errors.start_time
+                        }
+                        className="mt-2"
+                    />
+
+                    <InputError
+                        message={
+                            errors.end_time
+                        }
+                        className="mt-2"
+                    />
                 </div>
 
+                {/* Notes */}
                 <div>
                     <label
                         htmlFor="client_notes"
                         className="text-sm font-medium text-gray-700"
                     >
-                        Notes for counsellor
+                        Notes for
+                        counsellor
                     </label>
 
                     <textarea
                         id="client_notes"
                         rows="4"
-                        value={data.client_notes}
-                        onChange={(event) =>
-                            setData("client_notes", event.target.value)
+                        value={
+                            data.client_notes
+                        }
+                        onChange={(
+                            event,
+                        ) =>
+                            setData(
+                                "client_notes",
+                                event
+                                    .target
+                                    .value,
+                            )
                         }
                         placeholder="Briefly mention what you would like support with."
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     />
 
                     <InputError
-                        message={errors.client_notes}
+                        message={
+                            errors.client_notes
+                        }
                         className="mt-2"
                     />
                 </div>
 
-                {recentlySuccessful && (
-                    <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
-                        Appointment request submitted successfully.
-                    </div>
-                )}
-
                 <div className="flex justify-end">
                     <PrimaryButton
                         type="submit"
-                        disabled={processing || !hasSelectedSlot}
+                        disabled={
+                            processing ||
+                            !canSubmit
+                        }
                     >
-                        Request appointment
+                        {processing
+                            ? "Submitting..."
+                            : "Request appointment"}
                     </PrimaryButton>
                 </div>
             </form>
@@ -415,44 +977,67 @@ function BookingPanel({ counsellor }) {
     );
 }
 
-export default function Show({ counsellor }) {
+export default function Show({
+    counsellor,
+    services = [],
+}) {
     return (
         <ClientLayout
             header={
                 <div>
                     <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                        Counsellor Profile
+                        Counsellor
+                        Profile
                     </h2>
+
                     <p className="mt-1 text-sm text-gray-500">
-                        Review counsellor details and request an appointment.
+                        Review
+                        counsellor
+                        details and
+                        request an
+                        appointment.
                     </p>
                 </div>
             }
         >
-            <Head title={counsellor.name} />
+            <Head
+                title={
+                    counsellor.name
+                }
+            />
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
                     <div className="flex justify-start">
-                        <Link href={route("client.counsellors.index")}>
+                        <Link
+                            href={route(
+                                "client.counsellors.index",
+                            )}
+                        >
                             <SecondaryButton type="button">
-                                Back to counsellors
+                                Back to
+                                counsellors
                             </SecondaryButton>
                         </Link>
                     </div>
 
+                    {/* Profile header */}
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="bg-gradient-to-r from-indigo-50 to-white px-6 py-8">
                             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                                 <div>
                                     <div className="flex flex-wrap items-center gap-3">
                                         <h1 className="text-2xl font-bold text-gray-900">
-                                            {counsellor.name}
+                                            {
+                                                counsellor.name
+                                            }
                                         </h1>
 
                                         <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
                                             Rating:{" "}
-                                            {counsellor.rating_placeholder}
+                                            {
+                                                counsellor.rating_placeholder
+                                            }
                                         </span>
                                     </div>
 
@@ -463,13 +1048,21 @@ export default function Show({ counsellor }) {
                                     </p>
 
                                     <p className="mt-2 text-sm text-gray-500">
-                                        {formatValue(counsellor.city)}
+                                        {formatValue(
+                                            counsellor.city,
+                                        )}
                                     </p>
                                 </div>
 
                                 <div className="rounded-lg border border-indigo-100 bg-white px-4 py-3 text-sm text-indigo-700 shadow-sm">
-                                    Booking requests start as pending until the
-                                    counsellor confirms them.
+                                    Booking
+                                    requests
+                                    start as
+                                    pending
+                                    until the
+                                    counsellor
+                                    confirms
+                                    them.
                                 </div>
                             </div>
                         </div>
@@ -479,24 +1072,41 @@ export default function Show({ counsellor }) {
                                 label="Experience"
                                 value={`${counsellor.years_of_experience ?? 0} years`}
                             />
+
                             <DetailStat
                                 label="Registration"
-                                value={counsellor.registration_number}
+                                value={
+                                    counsellor.registration_number
+                                }
                             />
+
                             <DetailStat
                                 label="Gender"
-                                value={counsellor.gender}
+                                value={
+                                    counsellor.gender
+                                }
                             />
+
                             <DetailStat
                                 label="Location"
-                                value={counsellor.city}
+                                value={
+                                    counsellor.city
+                                }
                             />
                         </div>
                     </div>
 
                     <div className="grid gap-6 lg:grid-cols-3">
+                        {/* Main column */}
                         <div className="space-y-6 lg:col-span-2">
-                            <BookingPanel counsellor={counsellor} />
+                            <BookingPanel
+                                counsellor={
+                                    counsellor
+                                }
+                                services={
+                                    services
+                                }
+                            />
 
                             <SectionCard
                                 title="About"
@@ -504,11 +1114,18 @@ export default function Show({ counsellor }) {
                             >
                                 {counsellor.biography ? (
                                     <p className="whitespace-pre-line text-sm leading-6 text-gray-700">
-                                        {counsellor.biography}
+                                        {
+                                            counsellor.biography
+                                        }
                                     </p>
                                 ) : (
                                     <p className="text-sm text-gray-500">
-                                        No biography has been added yet.
+                                        No
+                                        biography
+                                        has
+                                        been
+                                        added
+                                        yet.
                                     </p>
                                 )}
                             </SectionCard>
@@ -523,24 +1140,100 @@ export default function Show({ counsellor }) {
                                     }
                                 />
                             </SectionCard>
+                        </div>
 
-                            <SectionCard
-                                title="Qualifications"
-                                description="Education and professional qualifications."
-                            >
-                                {counsellor.qualifications.length === 0 ? (
-                                    <p className="text-sm text-gray-500">
-                                        No qualifications listed yet.
-                                    </p>
+                        {/* Side column */}
+                        <div className="space-y-6">
+                            <SectionCard title="Specializations">
+                                {counsellor
+                                    .specializations
+                                    ?.length >
+                                0 ? (
+                                    <div className="flex flex-wrap gap-2">
+                                        {counsellor.specializations.map(
+                                            (
+                                                specialization,
+                                            ) => (
+                                                <Pill
+                                                    key={
+                                                        specialization.id
+                                                    }
+                                                >
+                                                    {
+                                                        specialization.name
+                                                    }
+                                                </Pill>
+                                            ),
+                                        )}
+                                    </div>
                                 ) : (
+                                    <p className="text-sm text-gray-500">
+                                        No
+                                        specializations
+                                        listed.
+                                    </p>
+                                )}
+                            </SectionCard>
+
+                            <SectionCard title="Languages">
+                                {counsellor
+                                    .languages
+                                    ?.length >
+                                0 ? (
                                     <div className="space-y-3">
-                                        {counsellor.qualifications.map(
-                                            (qualification) => (
+                                        {counsellor.languages.map(
+                                            (
+                                                language,
+                                            ) => (
                                                 <div
-                                                    key={qualification.id}
+                                                    key={
+                                                        language.id
+                                                    }
+                                                    className="flex items-center justify-between gap-3"
+                                                >
+                                                    <span className="text-sm text-gray-700">
+                                                        {
+                                                            language.name
+                                                        }
+                                                    </span>
+
+                                                    {language.proficiency && (
+                                                        <MutedPill>
+                                                            {formatValue(
+                                                                language.proficiency,
+                                                            )}
+                                                        </MutedPill>
+                                                    )}
+                                                </div>
+                                            ),
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500">
+                                        No
+                                        languages
+                                        listed.
+                                    </p>
+                                )}
+                            </SectionCard>
+
+                            <SectionCard title="Qualifications">
+                                {counsellor
+                                    .qualifications
+                                    ?.length >
+                                0 ? (
+                                    <div className="space-y-4">
+                                        {counsellor.qualifications.map(
+                                            (
+                                                qualification,
+                                            ) => (
+                                                <div
+                                                    key={
+                                                        qualification.id
+                                                    }
                                                     className="rounded-lg border border-gray-200 p-4"
                                                 >
-                                                    <p className="font-semibold text-gray-900">
+                                                    <p className="font-medium text-gray-900">
                                                         {formatValue(
                                                             qualification.qualification,
                                                         )}
@@ -552,17 +1245,11 @@ export default function Show({ counsellor }) {
                                                         )}
                                                     </p>
 
-                                                    <p className="mt-1 text-xs text-gray-500">
-                                                        Completed:{" "}
-                                                        {formatValue(
-                                                            qualification.year_completed,
-                                                        )}
-                                                    </p>
-
-                                                    {qualification.notes && (
-                                                        <p className="mt-2 text-sm text-gray-500">
+                                                    {qualification.year_completed && (
+                                                        <p className="mt-1 text-xs text-gray-500">
+                                                            Completed:{" "}
                                                             {
-                                                                qualification.notes
+                                                                qualification.year_completed
                                                             }
                                                         </p>
                                                     )}
@@ -570,77 +1257,53 @@ export default function Show({ counsellor }) {
                                             ),
                                         )}
                                     </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500">
+                                        No
+                                        qualifications
+                                        listed.
+                                    </p>
                                 )}
                             </SectionCard>
-                        </div>
 
-                        <div className="space-y-6">
-                            <SectionCard title="Specializations">
-                                <div className="flex flex-wrap gap-2">
-                                    {counsellor.specializations.length === 0 ? (
-                                        <MutedPill>Not listed</MutedPill>
-                                    ) : (
-                                        counsellor.specializations.map(
-                                            (specialization) => (
-                                                <Pill key={specialization.id}>
-                                                    {specialization.name}
-                                                </Pill>
-                                            ),
-                                        )
-                                    )}
-                                </div>
-                            </SectionCard>
+                            <SectionCard title="Contact">
+                                <dl className="space-y-4 text-sm">
+                                    <div>
+                                        <dt className="font-medium text-gray-500">
+                                            Email
+                                        </dt>
 
-                            <SectionCard title="Languages">
-                                <div className="flex flex-wrap gap-2">
-                                    {counsellor.languages.length === 0 ? (
-                                        <MutedPill>Not listed</MutedPill>
-                                    ) : (
-                                        counsellor.languages.map((language) => (
-                                            <MutedPill key={language.id}>
-                                                {language.name}
-                                                {language.proficiency
-                                                    ? ` · ${formatValue(
-                                                          language.proficiency,
-                                                      )}`
-                                                    : ""}
-                                            </MutedPill>
-                                        ))
-                                    )}
-                                </div>
-                            </SectionCard>
+                                        <dd className="mt-1 text-gray-800">
+                                            {formatValue(
+                                                counsellor.email,
+                                            )}
+                                        </dd>
+                                    </div>
 
-                            <SectionCard
-                                title="Booking Protection"
-                                description="How appointment safety is handled."
-                            >
-                                <ul className="space-y-2 text-sm text-gray-600">
-                                    <li>
-                                        • Breaks, blocked slots, and leave days
-                                        are excluded.
-                                    </li>
-                                    <li>
-                                        • Existing counsellor bookings are
-                                        excluded.
-                                    </li>
-                                    <li>
-                                        • Existing client bookings are excluded.
-                                    </li>
-                                    <li>
-                                        • The slot is rechecked before saving.
-                                    </li>
-                                </ul>
-                            </SectionCard>
+                                    <div>
+                                        <dt className="font-medium text-gray-500">
+                                            Phone
+                                        </dt>
 
-                            <SectionCard title="Contact Visibility">
-                                <div className="space-y-2 text-sm text-gray-600">
-                                    <p>
-                                        Email: {formatValue(counsellor.email)}
-                                    </p>
-                                    <p>
-                                        Phone: {formatValue(counsellor.phone)}
-                                    </p>
-                                </div>
+                                        <dd className="mt-1 text-gray-800">
+                                            {formatValue(
+                                                counsellor.phone,
+                                            )}
+                                        </dd>
+                                    </div>
+
+                                    <div>
+                                        <dt className="font-medium text-gray-500">
+                                            City
+                                        </dt>
+
+                                        <dd className="mt-1 text-gray-800">
+                                            {formatValue(
+                                                counsellor.city,
+                                            )}
+                                        </dd>
+                                    </div>
+                                </dl>
                             </SectionCard>
                         </div>
                     </div>

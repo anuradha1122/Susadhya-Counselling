@@ -2,6 +2,7 @@
 
 use App\Models\Appointment;
 use App\Models\ClientProfile;
+use App\Models\CounsellingService;
 use App\Models\CounsellorAvailabilityRule;
 use App\Models\CounsellorProfile;
 use App\Models\User;
@@ -13,59 +14,114 @@ use Spatie\Permission\PermissionRegistrar;
 uses(RefreshDatabase::class);
 
 beforeEach(function (): void {
-    app(PermissionRegistrar::class)->forgetCachedPermissions();
+    app(PermissionRegistrar::class)
+        ->forgetCachedPermissions();
 
-    $this->seed(RolePermissionSeeder::class);
+    $this->seed(
+        RolePermissionSeeder::class
+    );
 });
 
-function futureDateForAppointmentReschedulingModule(?int $dayOfWeek = null): string
-{
-    $date = CarbonImmutable::now()->addDay();
+function futureDateForAppointmentReschedulingModule(
+    ?int $dayOfWeek = null
+): string {
+    $date = CarbonImmutable::now()
+        ->addDay();
 
     if ($dayOfWeek === null) {
         return $date->toDateString();
     }
 
-    while ((int) $date->dayOfWeek !== $dayOfWeek) {
+    while (
+        (int) $date->dayOfWeek
+        !== $dayOfWeek
+    ) {
         $date = $date->addDay();
     }
 
     return $date->toDateString();
 }
 
-function createAppointmentReschedulingClientProfile(string $name = 'Reschedule Client'): ClientProfile
-{
-    $user = User::factory()->create([
-        'name' => $name,
-        'email' => fake()->unique()->safeEmail(),
-        'phone' => '+94 77 111 3333',
-        'is_active' => true,
-    ]);
+function createAppointmentReschedulingClientProfile(
+    string $name = 'Reschedule Client'
+): ClientProfile {
+    $user = User::factory()
+        ->create([
+            'name' => $name,
 
-    $user->assignRole('client');
+            'email' => fake()
+                ->unique()
+                ->safeEmail(),
 
-    return ClientProfile::factory()->create([
-        'user_id' => $user->id,
-    ]);
+            'phone' => '+94 77 111 3333',
+
+            'is_active' => true,
+        ]);
+
+    $user->assignRole(
+        'client'
+    );
+
+    return ClientProfile::factory()
+        ->create([
+            'user_id' => $user->id,
+        ]);
 }
 
-function createAppointmentReschedulingCounsellorProfile(string $name = 'Reschedule Counsellor'): CounsellorProfile
-{
-    $user = User::factory()->create([
-        'name' => $name,
-        'email' => fake()->unique()->safeEmail(),
-        'phone' => '+94 77 222 4444',
-        'is_active' => true,
-    ]);
+function createAppointmentReschedulingCounsellorProfile(
+    string $name = 'Reschedule Counsellor'
+): CounsellorProfile {
+    $user = User::factory()
+        ->create([
+            'name' => $name,
 
-    $user->assignRole('counsellor');
+            'email' => fake()
+                ->unique()
+                ->safeEmail(),
 
-    return CounsellorProfile::factory()->create([
-        'user_id' => $user->id,
-        'professional_title' => 'Clinical Counsellor',
-        'city' => 'Colombo',
-        'status' => 'active',
-    ]);
+            'phone' => '+94 77 222 4444',
+
+            'is_active' => true,
+        ]);
+
+    $user->assignRole(
+        'counsellor'
+    );
+
+    return CounsellorProfile::factory()
+        ->create([
+            'user_id' => $user->id,
+
+            'professional_title' => 'Clinical Counsellor',
+
+            'city' => 'Colombo',
+
+            'status' => 'active',
+        ]);
+}
+
+function createAppointmentReschedulingService(
+    array $overrides = []
+): CounsellingService {
+    return CounsellingService::factory()
+        ->create(
+            array_merge(
+                [
+                    'name' => 'Rescheduling Counselling Service',
+
+                    'service_mode' => 'both',
+
+                    'duration_minutes' => 60,
+
+                    'price' => '4500.00',
+
+                    'currency' => 'LKR',
+
+                    'status' => 'active',
+                ],
+                $overrides
+            )
+        );
 }
 
 function createAppointmentReschedulingAvailability(
@@ -73,18 +129,40 @@ function createAppointmentReschedulingAvailability(
     string $date
 ): CounsellorAvailabilityRule {
     return CounsellorAvailabilityRule::factory()
-        ->for($counsellorProfile)
+        ->for(
+            $counsellorProfile
+        )
         ->create([
-            'day_of_week' => CarbonImmutable::parse($date)->dayOfWeek,
+            'day_of_week' => CarbonImmutable::parse(
+                $date
+            )->dayOfWeek,
+
             'start_time' => '09:00',
+
             'end_time' => '12:00',
+
             'mode' => CounsellorAvailabilityRule::MODE_BOTH,
+
             'slot_duration_minutes' => 60,
+
             'buffer_minutes' => 0,
+
             'capacity_per_slot' => 1,
+
             'timezone' => 'Asia/Colombo',
-            'effective_from' => CarbonImmutable::parse($date)->subDay()->toDateString(),
-            'effective_until' => CarbonImmutable::parse($date)->addMonth()->toDateString(),
+
+            'effective_from' => CarbonImmutable::parse(
+                $date
+            )
+                ->subDay()
+                ->toDateString(),
+
+            'effective_until' => CarbonImmutable::parse(
+                $date
+            )
+                ->addMonth()
+                ->toDateString(),
+
             'is_active' => true,
         ]);
 }
@@ -92,406 +170,1031 @@ function createAppointmentReschedulingAvailability(
 function createAppointmentReschedulingAppointment(
     ClientProfile $clientProfile,
     CounsellorProfile $counsellorProfile,
+    CounsellingService $service,
     array $overrides = []
 ): Appointment {
-    return Appointment::query()->create(array_merge([
-        'client_profile_id' => $clientProfile->id,
-        'counsellor_profile_id' => $counsellorProfile->id,
-        'appointment_date' => futureDateForAppointmentReschedulingModule(),
-        'start_time' => '09:00',
-        'end_time' => '10:00',
-        'timezone' => 'Asia/Colombo',
-        'mode' => Appointment::MODE_ONLINE,
-        'status' => Appointment::STATUS_PENDING,
-        'client_notes' => 'Original appointment note.',
-    ], $overrides));
+    return Appointment::query()
+        ->create(
+            array_merge(
+                [
+                    'client_profile_id' => $clientProfile->id,
+
+                    'counsellor_profile_id' => $counsellorProfile->id,
+
+                    'counselling_service_id' => $service->id,
+
+                    'fee_amount' => $service->price,
+
+                    'fee_currency' => strtoupper(
+                        $service->currency
+                        ?: 'LKR'
+                    ),
+
+                    'appointment_date' => futureDateForAppointmentReschedulingModule(),
+
+                    'start_time' => '09:00',
+
+                    'end_time' => '10:00',
+
+                    'timezone' => 'Asia/Colombo',
+
+                    'mode' => Appointment::MODE_ONLINE,
+
+                    'status' => Appointment::STATUS_PENDING,
+
+                    'client_notes' => 'Original appointment note.',
+                ],
+                $overrides
+            )
+        );
 }
 
-it('allows a client to reschedule their pending appointment', function (): void {
-    $date = futureDateForAppointmentReschedulingModule();
-    $clientProfile = createAppointmentReschedulingClientProfile();
-    $counsellorProfile = createAppointmentReschedulingCounsellorProfile();
+it(
+    'allows a client to reschedule their pending appointment',
+    function (): void {
+        $date =
+            futureDateForAppointmentReschedulingModule();
 
-    createAppointmentReschedulingAvailability($counsellorProfile, $date);
+        $clientProfile =
+            createAppointmentReschedulingClientProfile();
 
-    $appointment = createAppointmentReschedulingAppointment(
-        clientProfile: $clientProfile,
-        counsellorProfile: $counsellorProfile,
-        overrides: [
-            'appointment_date' => $date,
-            'status' => Appointment::STATUS_PENDING,
-        ]
-    );
+        $counsellorProfile =
+            createAppointmentReschedulingCounsellorProfile();
 
-    $response = $this
-        ->actingAs($clientProfile->user)
-        ->from(route('client.appointments.index'))
-        ->patch(route('client.appointments.reschedule', $appointment), [
-            'appointment_date' => $date,
-            'start_time' => '10:00',
-            'end_time' => '11:00',
-            'mode' => Appointment::MODE_ONLINE,
-            'client_notes' => 'Please move this appointment.',
-        ]);
+        $service =
+            createAppointmentReschedulingService([
+                'price' => '4500.00',
+            ]);
 
-    $response->assertRedirect(route('client.appointments.index'));
+        createAppointmentReschedulingAvailability(
+            $counsellorProfile,
+            $date
+        );
 
-    $this->assertDatabaseHas('appointments', [
-        'id' => $appointment->id,
-        'status' => Appointment::STATUS_RESCHEDULED,
-        'updated_by' => $clientProfile->user_id,
-    ]);
+        $appointment =
+            createAppointmentReschedulingAppointment(
+                clientProfile: $clientProfile,
 
-    $this->assertDatabaseHas('appointments', [
-        'client_profile_id' => $clientProfile->id,
-        'counsellor_profile_id' => $counsellorProfile->id,
-        'rescheduled_from_appointment_id' => $appointment->id,
-        'appointment_date' => $date.' 00:00:00',
-        'start_time' => '10:00',
-        'end_time' => '11:00',
-        'mode' => Appointment::MODE_ONLINE,
-        'status' => Appointment::STATUS_PENDING,
-        'client_notes' => 'Please move this appointment.',
-    ]);
+                counsellorProfile: $counsellorProfile,
 
-    $this->assertDatabaseHas('appointment_status_histories', [
-        'appointment_id' => $appointment->id,
-        'from_status' => Appointment::STATUS_PENDING,
-        'to_status' => Appointment::STATUS_RESCHEDULED,
-        'reason' => 'Appointment rescheduled by client.',
-        'changed_by' => $clientProfile->user_id,
-    ]);
+                service: $service,
 
-    $newAppointment = Appointment::query()
-        ->where('rescheduled_from_appointment_id', $appointment->id)
-        ->firstOrFail();
+                overrides: [
+                    'appointment_date' => $date,
 
-    $this->assertDatabaseHas('appointment_status_histories', [
-        'appointment_id' => $newAppointment->id,
-        'from_status' => null,
-        'to_status' => Appointment::STATUS_PENDING,
-        'reason' => 'Rescheduled appointment requested by client.',
-        'changed_by' => $clientProfile->user_id,
-    ]);
-});
+                    'status' => Appointment::STATUS_PENDING,
+                ]
+            );
 
-it('allows a client to reschedule their confirmed appointment', function (): void {
-    $date = futureDateForAppointmentReschedulingModule();
-    $clientProfile = createAppointmentReschedulingClientProfile();
-    $counsellorProfile = createAppointmentReschedulingCounsellorProfile();
+        $response = $this
+            ->actingAs(
+                $clientProfile->user
+            )
+            ->from(
+                route(
+                    'client.appointments.index'
+                )
+            )
+            ->patch(
+                route(
+                    'client.appointments.reschedule',
+                    $appointment
+                ),
+                [
+                    'appointment_date' => $date,
 
-    createAppointmentReschedulingAvailability($counsellorProfile, $date);
+                    'start_time' => '10:00',
 
-    $appointment = createAppointmentReschedulingAppointment(
-        clientProfile: $clientProfile,
-        counsellorProfile: $counsellorProfile,
-        overrides: [
-            'appointment_date' => $date,
-            'status' => Appointment::STATUS_CONFIRMED,
-            'meeting_link' => 'https://meet.google.com/original-room',
-        ]
-    );
+                    'end_time' => '11:00',
 
-    $this
-        ->actingAs($clientProfile->user)
-        ->patch(route('client.appointments.reschedule', $appointment), [
-            'appointment_date' => $date,
-            'start_time' => '11:00',
-            'end_time' => '12:00',
-            'mode' => Appointment::MODE_ONLINE,
-            'client_notes' => null,
-        ])
-        ->assertRedirect(route('client.appointments.index'));
+                    'mode' => Appointment::MODE_ONLINE,
 
-    $this->assertDatabaseHas('appointments', [
-        'id' => $appointment->id,
-        'status' => Appointment::STATUS_RESCHEDULED,
-    ]);
+                    'client_notes' => 'Please move this appointment.',
+                ]
+            );
 
-    $this->assertDatabaseHas('appointments', [
-        'rescheduled_from_appointment_id' => $appointment->id,
-        'status' => Appointment::STATUS_PENDING,
-        'start_time' => '11:00',
-        'end_time' => '12:00',
-        'client_notes' => 'Original appointment note.',
-    ]);
-});
+        $response
+            ->assertRedirect(
+                route(
+                    'client.appointments.index'
+                )
+            );
 
-it('loads available slots for appointment rescheduling while ignoring the current appointment', function (): void {
-    $date = futureDateForAppointmentReschedulingModule();
-    $clientProfile = createAppointmentReschedulingClientProfile();
-    $counsellorProfile = createAppointmentReschedulingCounsellorProfile();
+        $this->assertDatabaseHas(
+            'appointments',
+            [
+                'id' => $appointment->id,
 
-    createAppointmentReschedulingAvailability($counsellorProfile, $date);
+                'status' => Appointment::STATUS_RESCHEDULED,
 
-    $appointment = createAppointmentReschedulingAppointment(
-        clientProfile: $clientProfile,
-        counsellorProfile: $counsellorProfile,
-        overrides: [
-            'appointment_date' => $date,
-            'start_time' => '09:00',
-            'end_time' => '10:00',
-            'status' => Appointment::STATUS_PENDING,
-        ]
-    );
+                'updated_by' => $clientProfile->user_id,
+            ]
+        );
 
-    $response = $this
-        ->actingAs($clientProfile->user)
-        ->getJson(route('client.appointments.reschedule-slots', [
-            'appointment' => $appointment,
-            'appointment_date' => $date,
-            'mode' => Appointment::MODE_ONLINE,
-        ]));
+        $this->assertDatabaseHas(
+            'appointments',
+            [
+                'client_profile_id' => $clientProfile->id,
 
-    $response->assertOk();
+                'counsellor_profile_id' => $counsellorProfile->id,
 
-    $slots = $response->json('slots');
+                'counselling_service_id' => $service->id,
 
-    expect($slots)
-        ->toHaveCount(3)
-        ->and(collect($slots)->pluck('start_time')->all())
-        ->toContain('09:00', '10:00', '11:00');
-});
+                'rescheduled_from_appointment_id' => $appointment->id,
 
-it('prevents a client from rescheduling another clients appointment', function (): void {
-    $date = futureDateForAppointmentReschedulingModule();
+                'appointment_date' => $date.' 00:00:00',
 
-    $firstClientProfile = createAppointmentReschedulingClientProfile('First Reschedule Client');
-    $secondClientProfile = createAppointmentReschedulingClientProfile('Second Reschedule Client');
-    $counsellorProfile = createAppointmentReschedulingCounsellorProfile();
+                'start_time' => '10:00',
 
-    createAppointmentReschedulingAvailability($counsellorProfile, $date);
+                'end_time' => '11:00',
 
-    $appointment = createAppointmentReschedulingAppointment(
-        clientProfile: $secondClientProfile,
-        counsellorProfile: $counsellorProfile,
-        overrides: [
-            'appointment_date' => $date,
-        ]
-    );
+                'mode' => Appointment::MODE_ONLINE,
 
-    $this
-        ->actingAs($firstClientProfile->user)
-        ->patch(route('client.appointments.reschedule', $appointment), [
-            'appointment_date' => $date,
-            'start_time' => '10:00',
-            'end_time' => '11:00',
-            'mode' => Appointment::MODE_ONLINE,
-        ])
-        ->assertNotFound();
+                'fee_currency' => 'LKR',
 
-    $this->assertDatabaseHas('appointments', [
-        'id' => $appointment->id,
-        'status' => Appointment::STATUS_PENDING,
-    ]);
+                'status' => Appointment::STATUS_PENDING,
 
-    $this->assertDatabaseMissing('appointments', [
-        'rescheduled_from_appointment_id' => $appointment->id,
-    ]);
-});
+                'client_notes' => 'Please move this appointment.',
+            ]
+        );
 
-it('prevents rescheduling completed appointments', function (): void {
-    $date = futureDateForAppointmentReschedulingModule();
-    $clientProfile = createAppointmentReschedulingClientProfile();
-    $counsellorProfile = createAppointmentReschedulingCounsellorProfile();
+        $this->assertDatabaseHas(
+            'appointment_status_histories',
+            [
+                'appointment_id' => $appointment->id,
 
-    createAppointmentReschedulingAvailability($counsellorProfile, $date);
+                'from_status' => Appointment::STATUS_PENDING,
 
-    $appointment = createAppointmentReschedulingAppointment(
-        clientProfile: $clientProfile,
-        counsellorProfile: $counsellorProfile,
-        overrides: [
-            'appointment_date' => $date,
-            'status' => Appointment::STATUS_COMPLETED,
-        ]
-    );
+                'to_status' => Appointment::STATUS_RESCHEDULED,
 
-    $this
-        ->actingAs($clientProfile->user)
-        ->from(route('client.appointments.index'))
-        ->patch(route('client.appointments.reschedule', $appointment), [
-            'appointment_date' => $date,
-            'start_time' => '10:00',
-            'end_time' => '11:00',
-            'mode' => Appointment::MODE_ONLINE,
-        ])
-        ->assertRedirect(route('client.appointments.index'))
-        ->assertSessionHasErrors('appointment');
+                'reason' => 'Appointment rescheduled by client.',
 
-    $this->assertDatabaseHas('appointments', [
-        'id' => $appointment->id,
-        'status' => Appointment::STATUS_COMPLETED,
-    ]);
-});
+                'changed_by' => $clientProfile->user_id,
+            ]
+        );
 
-it('prevents rescheduling to a slot outside counsellor availability', function (): void {
-    $date = futureDateForAppointmentReschedulingModule();
-    $clientProfile = createAppointmentReschedulingClientProfile();
-    $counsellorProfile = createAppointmentReschedulingCounsellorProfile();
+        $newAppointment =
+            Appointment::query()
+                ->where(
+                    'rescheduled_from_appointment_id',
+                    $appointment->id
+                )
+                ->firstOrFail();
 
-    createAppointmentReschedulingAvailability($counsellorProfile, $date);
+        expect(
+            $newAppointment
+                ->counselling_service_id
+        )->toBe(
+            $service->id
+        );
 
-    $appointment = createAppointmentReschedulingAppointment(
-        clientProfile: $clientProfile,
-        counsellorProfile: $counsellorProfile,
-        overrides: [
-            'appointment_date' => $date,
-        ]
-    );
+        expect(
+            $newAppointment
+                ->fee_amount
+        )->toBe(
+            '4500.00'
+        );
 
-    $this
-        ->actingAs($clientProfile->user)
-        ->from(route('client.appointments.index'))
-        ->patch(route('client.appointments.reschedule', $appointment), [
-            'appointment_date' => $date,
-            'start_time' => '14:00',
-            'end_time' => '15:00',
-            'mode' => Appointment::MODE_ONLINE,
-        ])
-        ->assertRedirect(route('client.appointments.index'))
-        ->assertSessionHasErrors('start_time');
+        expect(
+            $newAppointment
+                ->fee_currency
+        )->toBe(
+            'LKR'
+        );
 
-    $this->assertDatabaseHas('appointments', [
-        'id' => $appointment->id,
-        'status' => Appointment::STATUS_PENDING,
-    ]);
+        $this->assertDatabaseHas(
+            'appointment_status_histories',
+            [
+                'appointment_id' => $newAppointment->id,
 
-    $this->assertDatabaseMissing('appointments', [
-        'rescheduled_from_appointment_id' => $appointment->id,
-    ]);
-});
+                'from_status' => null,
 
-it('prevents rescheduling to a counsellor double-booked slot', function (): void {
-    $date = futureDateForAppointmentReschedulingModule();
+                'to_status' => Appointment::STATUS_PENDING,
 
-    $clientProfile = createAppointmentReschedulingClientProfile();
-    $otherClientProfile = createAppointmentReschedulingClientProfile('Other Client');
-    $counsellorProfile = createAppointmentReschedulingCounsellorProfile();
+                'reason' => 'Rescheduled appointment requested by client.',
 
-    createAppointmentReschedulingAvailability($counsellorProfile, $date);
+                'changed_by' => $clientProfile->user_id,
+            ]
+        );
+    }
+);
 
-    $appointment = createAppointmentReschedulingAppointment(
-        clientProfile: $clientProfile,
-        counsellorProfile: $counsellorProfile,
-        overrides: [
-            'appointment_date' => $date,
-            'start_time' => '09:00',
-            'end_time' => '10:00',
-        ]
-    );
+it(
+    'allows a client to reschedule their confirmed appointment',
+    function (): void {
+        $date =
+            futureDateForAppointmentReschedulingModule();
 
-    createAppointmentReschedulingAppointment(
-        clientProfile: $otherClientProfile,
-        counsellorProfile: $counsellorProfile,
-        overrides: [
-            'appointment_date' => $date,
-            'start_time' => '10:00',
-            'end_time' => '11:00',
-            'status' => Appointment::STATUS_CONFIRMED,
-        ]
-    );
+        $clientProfile =
+            createAppointmentReschedulingClientProfile();
 
-    $this
-        ->actingAs($clientProfile->user)
-        ->from(route('client.appointments.index'))
-        ->patch(route('client.appointments.reschedule', $appointment), [
-            'appointment_date' => $date,
-            'start_time' => '10:00',
-            'end_time' => '11:00',
-            'mode' => Appointment::MODE_ONLINE,
-        ])
-        ->assertRedirect(route('client.appointments.index'))
-        ->assertSessionHasErrors('start_time');
+        $counsellorProfile =
+            createAppointmentReschedulingCounsellorProfile();
 
-    $this->assertDatabaseHas('appointments', [
-        'id' => $appointment->id,
-        'status' => Appointment::STATUS_PENDING,
-    ]);
-});
+        $service =
+            createAppointmentReschedulingService();
 
-it('prevents rescheduling to a client double-booked slot', function (): void {
-    $date = futureDateForAppointmentReschedulingModule();
+        createAppointmentReschedulingAvailability(
+            $counsellorProfile,
+            $date
+        );
 
-    $clientProfile = createAppointmentReschedulingClientProfile();
-    $firstCounsellorProfile = createAppointmentReschedulingCounsellorProfile('First Reschedule Counsellor');
-    $secondCounsellorProfile = createAppointmentReschedulingCounsellorProfile('Second Reschedule Counsellor');
+        $appointment =
+            createAppointmentReschedulingAppointment(
+                clientProfile: $clientProfile,
 
-    createAppointmentReschedulingAvailability($firstCounsellorProfile, $date);
-    createAppointmentReschedulingAvailability($secondCounsellorProfile, $date);
+                counsellorProfile: $counsellorProfile,
 
-    $appointment = createAppointmentReschedulingAppointment(
-        clientProfile: $clientProfile,
-        counsellorProfile: $firstCounsellorProfile,
-        overrides: [
-            'appointment_date' => $date,
-            'start_time' => '09:00',
-            'end_time' => '10:00',
-        ]
-    );
+                service: $service,
 
-    createAppointmentReschedulingAppointment(
-        clientProfile: $clientProfile,
-        counsellorProfile: $secondCounsellorProfile,
-        overrides: [
-            'appointment_date' => $date,
-            'start_time' => '10:00',
-            'end_time' => '11:00',
-            'status' => Appointment::STATUS_CONFIRMED,
-        ]
-    );
+                overrides: [
+                    'appointment_date' => $date,
 
-    $this
-        ->actingAs($clientProfile->user)
-        ->from(route('client.appointments.index'))
-        ->patch(route('client.appointments.reschedule', $appointment), [
-            'appointment_date' => $date,
-            'start_time' => '10:00',
-            'end_time' => '11:00',
-            'mode' => Appointment::MODE_ONLINE,
-        ])
-        ->assertRedirect(route('client.appointments.index'))
-        ->assertSessionHasErrors('start_time');
+                    'status' => Appointment::STATUS_CONFIRMED,
 
-    $this->assertDatabaseHas('appointments', [
-        'id' => $appointment->id,
-        'status' => Appointment::STATUS_PENDING,
-    ]);
-});
+                    'meeting_link' => 'https://meet.google.com/original-room',
+                ]
+            );
 
-it('requires authenticated client role to reschedule appointment', function (): void {
-    $date = futureDateForAppointmentReschedulingModule();
+        $this
+            ->actingAs(
+                $clientProfile->user
+            )
+            ->patch(
+                route(
+                    'client.appointments.reschedule',
+                    $appointment
+                ),
+                [
+                    'appointment_date' => $date,
 
-    $clientProfile = createAppointmentReschedulingClientProfile();
-    $counsellorProfile = createAppointmentReschedulingCounsellorProfile();
+                    'start_time' => '11:00',
 
-    createAppointmentReschedulingAvailability($counsellorProfile, $date);
+                    'end_time' => '12:00',
 
-    $appointment = createAppointmentReschedulingAppointment(
-        clientProfile: $clientProfile,
-        counsellorProfile: $counsellorProfile,
-        overrides: [
-            'appointment_date' => $date,
-        ]
-    );
+                    'mode' => Appointment::MODE_ONLINE,
 
-    $admin = User::factory()->create([
-        'is_active' => true,
-    ]);
+                    'client_notes' => null,
+                ]
+            )
+            ->assertRedirect(
+                route(
+                    'client.appointments.index'
+                )
+            );
 
-    $admin->assignRole('admin');
+        $this->assertDatabaseHas(
+            'appointments',
+            [
+                'id' => $appointment->id,
 
-    $this
-        ->actingAs($admin)
-        ->patch(route('client.appointments.reschedule', $appointment), [
-            'appointment_date' => $date,
-            'start_time' => '10:00',
-            'end_time' => '11:00',
-            'mode' => Appointment::MODE_ONLINE,
-        ])
-        ->assertForbidden();
+                'status' => Appointment::STATUS_RESCHEDULED,
+            ]
+        );
 
-    $this->assertDatabaseHas('appointments', [
-        'id' => $appointment->id,
-        'status' => Appointment::STATUS_PENDING,
-    ]);
-});
+        $this->assertDatabaseHas(
+            'appointments',
+            [
+                'rescheduled_from_appointment_id' => $appointment->id,
+
+                'counselling_service_id' => $service->id,
+
+                'status' => Appointment::STATUS_PENDING,
+
+                'start_time' => '11:00',
+
+                'end_time' => '12:00',
+
+                'client_notes' => 'Original appointment note.',
+            ]
+        );
+
+        $newAppointment =
+            Appointment::query()
+                ->where(
+                    'rescheduled_from_appointment_id',
+                    $appointment->id
+                )
+                ->firstOrFail();
+
+        expect(
+            $newAppointment
+                ->fee_amount
+        )->toBe(
+            $appointment->fee_amount
+        );
+
+        expect(
+            $newAppointment
+                ->fee_currency
+        )->toBe(
+            $appointment->fee_currency
+        );
+    }
+);
+
+it(
+    'loads available slots for appointment rescheduling while ignoring the current appointment',
+    function (): void {
+        $date =
+            futureDateForAppointmentReschedulingModule();
+
+        $clientProfile =
+            createAppointmentReschedulingClientProfile();
+
+        $counsellorProfile =
+            createAppointmentReschedulingCounsellorProfile();
+
+        $service =
+            createAppointmentReschedulingService();
+
+        createAppointmentReschedulingAvailability(
+            $counsellorProfile,
+            $date
+        );
+
+        $appointment =
+            createAppointmentReschedulingAppointment(
+                clientProfile: $clientProfile,
+
+                counsellorProfile: $counsellorProfile,
+
+                service: $service,
+
+                overrides: [
+                    'appointment_date' => $date,
+
+                    'start_time' => '09:00',
+
+                    'end_time' => '10:00',
+
+                    'status' => Appointment::STATUS_PENDING,
+                ]
+            );
+
+        $response = $this
+            ->actingAs(
+                $clientProfile->user
+            )
+            ->getJson(
+                route(
+                    'client.appointments.reschedule-slots',
+                    [
+                        'appointment' => $appointment,
+
+                        'appointment_date' => $date,
+
+                        'mode' => Appointment::MODE_ONLINE,
+                    ]
+                )
+            );
+
+        $response->assertOk();
+
+        $slots =
+            $response->json(
+                'slots'
+            );
+
+        expect($slots)
+            ->toHaveCount(3)
+            ->and(
+                collect($slots)
+                    ->pluck(
+                        'start_time'
+                    )
+                    ->all()
+            )
+            ->toContain(
+                '09:00',
+                '10:00',
+                '11:00'
+            );
+    }
+);
+
+it(
+    'prevents a client from rescheduling another clients appointment',
+    function (): void {
+        $date =
+            futureDateForAppointmentReschedulingModule();
+
+        $firstClientProfile =
+            createAppointmentReschedulingClientProfile(
+                'First Reschedule Client'
+            );
+
+        $secondClientProfile =
+            createAppointmentReschedulingClientProfile(
+                'Second Reschedule Client'
+            );
+
+        $counsellorProfile =
+            createAppointmentReschedulingCounsellorProfile();
+
+        $service =
+            createAppointmentReschedulingService();
+
+        createAppointmentReschedulingAvailability(
+            $counsellorProfile,
+            $date
+        );
+
+        $appointment =
+            createAppointmentReschedulingAppointment(
+                clientProfile: $secondClientProfile,
+
+                counsellorProfile: $counsellorProfile,
+
+                service: $service,
+
+                overrides: [
+                    'appointment_date' => $date,
+                ]
+            );
+
+        $this
+            ->actingAs(
+                $firstClientProfile->user
+            )
+            ->patch(
+                route(
+                    'client.appointments.reschedule',
+                    $appointment
+                ),
+                [
+                    'appointment_date' => $date,
+
+                    'start_time' => '10:00',
+
+                    'end_time' => '11:00',
+
+                    'mode' => Appointment::MODE_ONLINE,
+                ]
+            )
+            ->assertNotFound();
+
+        $this->assertDatabaseHas(
+            'appointments',
+            [
+                'id' => $appointment->id,
+
+                'status' => Appointment::STATUS_PENDING,
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'appointments',
+            [
+                'rescheduled_from_appointment_id' => $appointment->id,
+            ]
+        );
+    }
+);
+
+it(
+    'prevents rescheduling completed appointments',
+    function (): void {
+        $date =
+            futureDateForAppointmentReschedulingModule();
+
+        $clientProfile =
+            createAppointmentReschedulingClientProfile();
+
+        $counsellorProfile =
+            createAppointmentReschedulingCounsellorProfile();
+
+        $service =
+            createAppointmentReschedulingService();
+
+        createAppointmentReschedulingAvailability(
+            $counsellorProfile,
+            $date
+        );
+
+        $appointment =
+            createAppointmentReschedulingAppointment(
+                clientProfile: $clientProfile,
+
+                counsellorProfile: $counsellorProfile,
+
+                service: $service,
+
+                overrides: [
+                    'appointment_date' => $date,
+
+                    'status' => Appointment::STATUS_COMPLETED,
+                ]
+            );
+
+        $this
+            ->actingAs(
+                $clientProfile->user
+            )
+            ->from(
+                route(
+                    'client.appointments.index'
+                )
+            )
+            ->patch(
+                route(
+                    'client.appointments.reschedule',
+                    $appointment
+                ),
+                [
+                    'appointment_date' => $date,
+
+                    'start_time' => '10:00',
+
+                    'end_time' => '11:00',
+
+                    'mode' => Appointment::MODE_ONLINE,
+                ]
+            )
+            ->assertRedirect(
+                route(
+                    'client.appointments.index'
+                )
+            )
+            ->assertSessionHasErrors(
+                'appointment'
+            );
+
+        $this->assertDatabaseHas(
+            'appointments',
+            [
+                'id' => $appointment->id,
+
+                'status' => Appointment::STATUS_COMPLETED,
+            ]
+        );
+    }
+);
+
+it(
+    'prevents rescheduling to a slot outside counsellor availability',
+    function (): void {
+        $date =
+            futureDateForAppointmentReschedulingModule();
+
+        $clientProfile =
+            createAppointmentReschedulingClientProfile();
+
+        $counsellorProfile =
+            createAppointmentReschedulingCounsellorProfile();
+
+        $service =
+            createAppointmentReschedulingService();
+
+        createAppointmentReschedulingAvailability(
+            $counsellorProfile,
+            $date
+        );
+
+        $appointment =
+            createAppointmentReschedulingAppointment(
+                clientProfile: $clientProfile,
+
+                counsellorProfile: $counsellorProfile,
+
+                service: $service,
+
+                overrides: [
+                    'appointment_date' => $date,
+                ]
+            );
+
+        $this
+            ->actingAs(
+                $clientProfile->user
+            )
+            ->from(
+                route(
+                    'client.appointments.index'
+                )
+            )
+            ->patch(
+                route(
+                    'client.appointments.reschedule',
+                    $appointment
+                ),
+                [
+                    'appointment_date' => $date,
+
+                    'start_time' => '14:00',
+
+                    'end_time' => '15:00',
+
+                    'mode' => Appointment::MODE_ONLINE,
+                ]
+            )
+            ->assertRedirect(
+                route(
+                    'client.appointments.index'
+                )
+            )
+            ->assertSessionHasErrors(
+                'start_time'
+            );
+
+        $this->assertDatabaseHas(
+            'appointments',
+            [
+                'id' => $appointment->id,
+
+                'status' => Appointment::STATUS_PENDING,
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'appointments',
+            [
+                'rescheduled_from_appointment_id' => $appointment->id,
+            ]
+        );
+    }
+);
+
+it(
+    'prevents rescheduling to a counsellor double-booked slot',
+    function (): void {
+        $date =
+            futureDateForAppointmentReschedulingModule();
+
+        $clientProfile =
+            createAppointmentReschedulingClientProfile();
+
+        $otherClientProfile =
+            createAppointmentReschedulingClientProfile(
+                'Other Client'
+            );
+
+        $counsellorProfile =
+            createAppointmentReschedulingCounsellorProfile();
+
+        $service =
+            createAppointmentReschedulingService();
+
+        createAppointmentReschedulingAvailability(
+            $counsellorProfile,
+            $date
+        );
+
+        $appointment =
+            createAppointmentReschedulingAppointment(
+                clientProfile: $clientProfile,
+
+                counsellorProfile: $counsellorProfile,
+
+                service: $service,
+
+                overrides: [
+                    'appointment_date' => $date,
+
+                    'start_time' => '09:00',
+
+                    'end_time' => '10:00',
+                ]
+            );
+
+        createAppointmentReschedulingAppointment(
+            clientProfile: $otherClientProfile,
+
+            counsellorProfile: $counsellorProfile,
+
+            service: $service,
+
+            overrides: [
+                'appointment_date' => $date,
+
+                'start_time' => '10:00',
+
+                'end_time' => '11:00',
+
+                'status' => Appointment::STATUS_CONFIRMED,
+            ]
+        );
+
+        $this
+            ->actingAs(
+                $clientProfile->user
+            )
+            ->from(
+                route(
+                    'client.appointments.index'
+                )
+            )
+            ->patch(
+                route(
+                    'client.appointments.reschedule',
+                    $appointment
+                ),
+                [
+                    'appointment_date' => $date,
+
+                    'start_time' => '10:00',
+
+                    'end_time' => '11:00',
+
+                    'mode' => Appointment::MODE_ONLINE,
+                ]
+            )
+            ->assertRedirect(
+                route(
+                    'client.appointments.index'
+                )
+            )
+            ->assertSessionHasErrors(
+                'start_time'
+            );
+
+        $this->assertDatabaseHas(
+            'appointments',
+            [
+                'id' => $appointment->id,
+
+                'status' => Appointment::STATUS_PENDING,
+            ]
+        );
+    }
+);
+
+it(
+    'prevents rescheduling to a client double-booked slot',
+    function (): void {
+        $date =
+            futureDateForAppointmentReschedulingModule();
+
+        $clientProfile =
+            createAppointmentReschedulingClientProfile();
+
+        $firstCounsellorProfile =
+            createAppointmentReschedulingCounsellorProfile(
+                'First Reschedule Counsellor'
+            );
+
+        $secondCounsellorProfile =
+            createAppointmentReschedulingCounsellorProfile(
+                'Second Reschedule Counsellor'
+            );
+
+        $service =
+            createAppointmentReschedulingService();
+
+        createAppointmentReschedulingAvailability(
+            $firstCounsellorProfile,
+            $date
+        );
+
+        createAppointmentReschedulingAvailability(
+            $secondCounsellorProfile,
+            $date
+        );
+
+        $appointment =
+            createAppointmentReschedulingAppointment(
+                clientProfile: $clientProfile,
+
+                counsellorProfile: $firstCounsellorProfile,
+
+                service: $service,
+
+                overrides: [
+                    'appointment_date' => $date,
+
+                    'start_time' => '09:00',
+
+                    'end_time' => '10:00',
+                ]
+            );
+
+        createAppointmentReschedulingAppointment(
+            clientProfile: $clientProfile,
+
+            counsellorProfile: $secondCounsellorProfile,
+
+            service: $service,
+
+            overrides: [
+                'appointment_date' => $date,
+
+                'start_time' => '10:00',
+
+                'end_time' => '11:00',
+
+                'status' => Appointment::STATUS_CONFIRMED,
+            ]
+        );
+
+        $this
+            ->actingAs(
+                $clientProfile->user
+            )
+            ->from(
+                route(
+                    'client.appointments.index'
+                )
+            )
+            ->patch(
+                route(
+                    'client.appointments.reschedule',
+                    $appointment
+                ),
+                [
+                    'appointment_date' => $date,
+
+                    'start_time' => '10:00',
+
+                    'end_time' => '11:00',
+
+                    'mode' => Appointment::MODE_ONLINE,
+                ]
+            )
+            ->assertRedirect(
+                route(
+                    'client.appointments.index'
+                )
+            )
+            ->assertSessionHasErrors(
+                'start_time'
+            );
+
+        $this->assertDatabaseHas(
+            'appointments',
+            [
+                'id' => $appointment->id,
+
+                'status' => Appointment::STATUS_PENDING,
+            ]
+        );
+    }
+);
+
+it(
+    'rejects rescheduling a legacy appointment without counselling service',
+    function (): void {
+        $date =
+            futureDateForAppointmentReschedulingModule();
+
+        $clientProfile =
+            createAppointmentReschedulingClientProfile();
+
+        $counsellorProfile =
+            createAppointmentReschedulingCounsellorProfile();
+
+        createAppointmentReschedulingAvailability(
+            $counsellorProfile,
+            $date
+        );
+
+        $appointment =
+            Appointment::query()
+                ->create([
+                    'client_profile_id' => $clientProfile->id,
+
+                    'counsellor_profile_id' => $counsellorProfile->id,
+
+                    'counselling_service_id' => null,
+
+                    'fee_amount' => null,
+
+                    'fee_currency' => null,
+
+                    'appointment_date' => $date,
+
+                    'start_time' => '09:00',
+
+                    'end_time' => '10:00',
+
+                    'timezone' => 'Asia/Colombo',
+
+                    'mode' => Appointment::MODE_ONLINE,
+
+                    'status' => Appointment::STATUS_PENDING,
+                ]);
+
+        $this
+            ->actingAs(
+                $clientProfile->user
+            )
+            ->from(
+                route(
+                    'client.appointments.index'
+                )
+            )
+            ->patch(
+                route(
+                    'client.appointments.reschedule',
+                    $appointment
+                ),
+                [
+                    'appointment_date' => $date,
+
+                    'start_time' => '10:00',
+
+                    'end_time' => '11:00',
+
+                    'mode' => Appointment::MODE_ONLINE,
+                ]
+            )
+            ->assertRedirect(
+                route(
+                    'client.appointments.index'
+                )
+            )
+            ->assertSessionHasErrors(
+                'appointment'
+            );
+
+        $this->assertDatabaseHas(
+            'appointments',
+            [
+                'id' => $appointment->id,
+
+                'status' => Appointment::STATUS_PENDING,
+
+                'counselling_service_id' => null,
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'appointments',
+            [
+                'rescheduled_from_appointment_id' => $appointment->id,
+            ]
+        );
+    }
+);
+
+it(
+    'requires authenticated client role to reschedule appointment',
+    function (): void {
+        $date =
+            futureDateForAppointmentReschedulingModule();
+
+        $clientProfile =
+            createAppointmentReschedulingClientProfile();
+
+        $counsellorProfile =
+            createAppointmentReschedulingCounsellorProfile();
+
+        $service =
+            createAppointmentReschedulingService();
+
+        createAppointmentReschedulingAvailability(
+            $counsellorProfile,
+            $date
+        );
+
+        $appointment =
+            createAppointmentReschedulingAppointment(
+                clientProfile: $clientProfile,
+
+                counsellorProfile: $counsellorProfile,
+
+                service: $service,
+
+                overrides: [
+                    'appointment_date' => $date,
+                ]
+            );
+
+        $admin =
+            User::factory()
+                ->create([
+                    'is_active' => true,
+                ]);
+
+        $admin->assignRole(
+            'admin'
+        );
+
+        $this
+            ->actingAs($admin)
+            ->patch(
+                route(
+                    'client.appointments.reschedule',
+                    $appointment
+                ),
+                [
+                    'appointment_date' => $date,
+
+                    'start_time' => '10:00',
+
+                    'end_time' => '11:00',
+
+                    'mode' => Appointment::MODE_ONLINE,
+                ]
+            )
+            ->assertForbidden();
+
+        $this->assertDatabaseHas(
+            'appointments',
+            [
+                'id' => $appointment->id,
+
+                'status' => Appointment::STATUS_PENDING,
+            ]
+        );
+    }
+);

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Appointment;
 use App\Models\ClientProfile;
+use App\Models\CounsellingService;
 use App\Models\CounsellorProfile;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -17,19 +18,28 @@ class AppointmentFactory extends Factory
     public function definition(): array
     {
         $appointmentDate = fake()
-            ->dateTimeBetween('+1 day', '+30 days');
+            ->dateTimeBetween(
+                '+1 day',
+                '+30 days'
+            );
 
-        $startHour = fake()->numberBetween(8, 15);
+        $startHour =
+            fake()->numberBetween(
+                8,
+                15
+            );
 
-        $startTime = sprintf(
-            '%02d:00:00',
-            $startHour
-        );
+        $startTime =
+            sprintf(
+                '%02d:00:00',
+                $startHour
+            );
 
-        $endTime = sprintf(
-            '%02d:00:00',
-            $startHour + 1
-        );
+        $endTime =
+            sprintf(
+                '%02d:00:00',
+                $startHour + 1
+            );
 
         return [
             'client_profile_id' => ClientProfile::factory(),
@@ -37,14 +47,21 @@ class AppointmentFactory extends Factory
             'counsellor_profile_id' => CounsellorProfile::factory(),
 
             /*
-             * Nullable in the M09 appointments migration.
+             * Generic appointments may still be used
+             * by tests/modules that do not care about
+             * counselling-service or financial data.
              *
-             * Keeping this null prevents the generic factory from
-             * depending on CounsellingServiceFactory.
+             * Use ->withCounsellingService() for
+             * booking/rescheduling/payment scenarios.
              */
             'counselling_service_id' => null,
 
-            'appointment_date' => $appointmentDate->format('Y-m-d'),
+            'fee_amount' => null,
+
+            'fee_currency' => null,
+
+            'appointment_date' => $appointmentDate
+                ->format('Y-m-d'),
 
             'start_time' => $startTime,
 
@@ -82,6 +99,41 @@ class AppointmentFactory extends Factory
 
             'updated_by' => null,
         ];
+    }
+
+    public function withCounsellingService(
+        ?CounsellingService $service = null
+    ): static {
+        return $this->state(
+            function () use (
+                $service
+            ): array {
+                $service ??=
+                    CounsellingService::factory()
+                        ->create([
+                            'service_mode' => 'both',
+
+                            'duration_minutes' => 60,
+
+                            'price' => '4500.00',
+
+                            'currency' => 'LKR',
+
+                            'status' => 'active',
+                        ]);
+
+                return [
+                    'counselling_service_id' => $service->id,
+
+                    'fee_amount' => $service->price,
+
+                    'fee_currency' => strtoupper(
+                        $service->currency
+                        ?: 'LKR'
+                    ),
+                ];
+            }
+        );
     }
 
     public function confirmed(): static

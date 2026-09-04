@@ -42,6 +42,8 @@ class Appointment extends Model
         'end_time',
         'timezone',
         'mode',
+        'fee_amount',
+        'fee_currency',
         'status',
         'meeting_link',
         'location',
@@ -65,6 +67,7 @@ class Appointment extends Model
         'cancelled_at' => 'datetime',
         'reminder_scheduled_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
+        'fee_amount' => 'decimal:2',
     ];
 
     public function uniqueIds(): array
@@ -305,5 +308,41 @@ class Appointment extends Model
     public function counsellingSession(): HasOne
     {
         return $this->hasOne(CounsellingSession::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(
+            Payment::class
+        );
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(
+            function (Appointment $appointment): void {
+                if (
+                    $appointment->fee_amount !== null
+                    || ! $appointment->counselling_service_id
+                ) {
+                    return;
+                }
+
+                $service = CounsellingService::query()
+                    ->find(
+                        $appointment->counselling_service_id
+                    );
+
+                if (! $service) {
+                    return;
+                }
+
+                $appointment->fee_amount =
+                    $service->price;
+
+                $appointment->fee_currency =
+                    $service->currency;
+            }
+        );
     }
 }

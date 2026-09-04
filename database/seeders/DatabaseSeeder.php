@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             CounsellorReferenceSeeder::class,
             ClinicalRecordPermissionSeeder::class,
             DocumentPermissionSeeder::class,
+            PaymentPermissionSeeder::class,
         ]);
     }
 }

@@ -9,3 +9,9 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('appointments:send-reminders')->everyFiveMinutes();
+
+Schedule::command(
+    'payments:reconcile --limit=100'
+)
+    ->everyFifteenMinutes()
+    ->withoutOverlapping();

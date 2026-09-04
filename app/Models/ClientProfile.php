@@ -217,4 +217,11 @@ class ClientProfile extends Model
             SecureDocument::class
         );
     }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(
+            Payment::class
+        );
+    }
 }
