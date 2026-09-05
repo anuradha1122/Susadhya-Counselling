@@ -2,6 +2,7 @@ import {
     AlertTriangle,
     BriefcaseBusiness,
     BriefcaseMedical,
+    BarChart3,
     CalendarDays,
     CircleDollarSign,
     ClipboardList,
@@ -82,7 +83,12 @@ export const adminNavigation = [
         icon: ShieldAlert,
         permission: "admin.case-escalations.manage",
     },
-
+    {
+        label: "Reports",
+        routeName: "admin.reports.index",
+        icon: BarChart3,
+        permission: "reports.operational.view",
+    },
     {
         label: "Client Intakes",
         routeName: "admin.intakes.index",
@@ -295,5 +301,11 @@ export const financeNavigation = [
         routeName: "finance.refunds.index",
         icon: RotateCcw,
         permission: "payments.refunds.manage",
+    },
+    {
+        label: "Reports",
+        routeName: "finance.reports.index",
+        icon: BarChart3,
+        permission: "reports.finance.view",
     },
 ];

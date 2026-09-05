@@ -1438,3 +1438,4 @@ Route::middleware([
 require __DIR__.'/auth.php';
 require __DIR__.'/admin_operations.php';
 require __DIR__.'/notifications.php';
+require __DIR__.'/reports.php';
