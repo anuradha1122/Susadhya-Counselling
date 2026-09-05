@@ -47,7 +47,7 @@ class AppointmentController extends Controller
             ->with([
                 'clientProfile.user:id,name,email,phone,is_active',
                 'clientProfile:id,user_id,city,status',
-                'counsellingService:id,name,service_code,service_mode,duration_minutes,base_fee,status',
+                'counsellingService:id,name,slug,service_mode,duration_minutes,price,currency,status',
             ])
             ->where('counsellor_profile_id', $counsellorProfile->id)
             ->when($status, function (Builder $query, string $status): void {
@@ -291,10 +291,11 @@ class AppointmentController extends Controller
                 ? [
                     'id' => $appointment->counsellingService->id,
                     'name' => $appointment->counsellingService->name,
-                    'service_code' => $appointment->counsellingService->service_code,
+                    'slug' => $appointment->counsellingService->slug,
                     'service_mode' => $appointment->counsellingService->service_mode,
                     'duration_minutes' => $appointment->counsellingService->duration_minutes,
-                    'base_fee' => $appointment->counsellingService->base_fee,
+                    'price' => $appointment->counsellingService->price,
+                    'currency' => $appointment->counsellingService->currency,
                     'status' => $appointment->counsellingService->status,
                 ]
                 : null,

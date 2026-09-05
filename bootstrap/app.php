@@ -1,5 +1,8 @@
 <?php
 
+use App\Console\Commands\PurgePrivacyExports;
+use App\Console\Commands\RunRetentionPolicies;
+use App\Http\Middleware\AuditSensitiveAction;
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsureUserHasPermission;
 use App\Http\Middleware\EnsureUserHasRole;
@@ -16,6 +19,10 @@ return Application::configure(
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withCommands([
+        RunRetentionPolicies::class,
+        PurgePrivacyExports::class,
+    ])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             HandleInertiaRequests::class,
@@ -25,6 +32,7 @@ return Application::configure(
             'active' => EnsureAccountIsActive::class,
             'role' => EnsureUserHasRole::class,
             'permission' => EnsureUserHasPermission::class,
+            'audit.sensitive' => AuditSensitiveAction::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

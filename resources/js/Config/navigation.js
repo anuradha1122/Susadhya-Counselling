@@ -1,4 +1,7 @@
 import {
+    Siren,
+    ClipboardCheck,
+    ArchiveRestore,
     AlertTriangle,
     BriefcaseBusiness,
     BriefcaseMedical,
@@ -154,8 +157,16 @@ export const adminNavigation = [
 
     {
         label: "Audit Logs",
+        routeName: "compliance.audit-events.index",
         icon: FileClock,
-        disabled: true,
+        permission: "compliance.audit.view",
+    },
+
+    {
+        label: "Privacy & Compliance",
+        routeName: "compliance.dashboard",
+        icon: ShieldCheck,
+        permission: "compliance.audit.view",
     },
 
     // M16 — Master Settings
@@ -287,6 +298,12 @@ export const clientNavigation = [
         icon: ReceiptText,
         permission: "payments.client.manage",
     },
+    {
+        label: "Privacy Requests",
+        routeName: "client.privacy-requests.index",
+        icon: ShieldCheck,
+        permission: "privacy.requests.submit",
+    },
 ];
 
 export const financeNavigation = [
@@ -307,5 +324,44 @@ export const financeNavigation = [
         routeName: "finance.reports.index",
         icon: BarChart3,
         permission: "reports.finance.view",
+    },
+];
+
+export const complianceNavigation = [
+    {
+        label: "Dashboard",
+        routeName: "compliance.dashboard",
+        icon: LayoutDashboard,
+        permission: "compliance.audit.view",
+    },
+    {
+        label: "Audit Logs",
+        routeName: "compliance.audit-events.index",
+        icon: FileClock,
+        permission: "compliance.audit.view",
+    },
+    {
+        label: "Privacy Requests",
+        routeName: "compliance.privacy-requests.index",
+        icon: ShieldCheck,
+        permission: "compliance.privacy.view",
+    },
+    {
+        label: "Consent History",
+        routeName: "compliance.consents.index",
+        icon: ClipboardCheck,
+        permission: "compliance.consents.view",
+    },
+    {
+        label: "Retention",
+        routeName: "compliance.retention.index",
+        icon: ArchiveRestore,
+        permission: "compliance.retention.view",
+    },
+    {
+        label: "Breach Register",
+        routeName: "compliance.breaches.index",
+        icon: Siren,
+        permission: "compliance.breaches.view",
     },
 ];

@@ -21,3 +21,15 @@ Schedule::command(
 )
     ->everyFifteenMinutes()
     ->withoutOverlapping();
+
+Schedule::command(
+    'compliance:run-retention --execute'
+)
+    ->dailyAt('02:30')
+    ->withoutOverlapping();
+
+Schedule::command(
+    'compliance:purge-privacy-exports'
+)
+    ->dailyAt('03:00')
+    ->withoutOverlapping();

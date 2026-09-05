@@ -17,6 +17,11 @@ class DashboardRedirectController extends Controller
                 ->route('admin.dashboard');
         }
 
+        if ($user->hasRole('privacy_officer')) {
+            return redirect()
+                ->route('compliance.dashboard');
+        }
+
         if ($user->can('dashboard.counsellor.view')) {
             return redirect()
                 ->route('counsellor.dashboard');
@@ -28,10 +33,10 @@ class DashboardRedirectController extends Controller
         }
 
         if ($user->hasRole('finance_admin')) {
-            return redirect()->route(
-                'finance.payments.index'
-            );
+            return redirect()
+                ->route('finance.payments.index');
         }
+
         abort(
             403,
             'No dashboard has been assigned to this account.'

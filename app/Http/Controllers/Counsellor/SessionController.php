@@ -43,7 +43,7 @@ class SessionController extends Controller
             ->with([
                 'clientProfile.user:id,name,email,phone,is_active',
                 'clientProfile:id,user_id',
-                'counsellingService:id,name,service_code,duration_minutes,service_mode,base_fee,status',
+                'counsellingService:id,name,slug,duration_minutes,service_mode,price,currency,status',
             ])
             ->where('counsellor_profile_id', $counsellorProfile->id)
             ->where('status', Appointment::STATUS_CONFIRMED)
