@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             PaymentPermissionSeeder::class,
             NotificationTemplateSeeder::class,
             NotificationPermissionSeeder::class,
+            AdminOperationsSeeder::class,
         ]);
     }
 }

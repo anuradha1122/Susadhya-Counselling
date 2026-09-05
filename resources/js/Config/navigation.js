@@ -1,4 +1,5 @@
 import {
+    AlertTriangle,
     BriefcaseBusiness,
     BriefcaseMedical,
     CalendarDays,
@@ -7,19 +8,21 @@ import {
     ClipboardPenLine,
     Clock3,
     FileClock,
+    FilePenLine,
     FileText,
     HeartHandshake,
     KeyRound,
     LayoutDashboard,
+    ReceiptText,
+    RotateCcw,
     Search,
     Settings,
+    ShieldAlert,
     ShieldCheck,
     Stethoscope,
     Tags,
     UserRoundCog,
     Users,
-    ReceiptText,
-    RotateCcw,
 } from "lucide-react";
 
 export const adminNavigation = [
@@ -65,6 +68,21 @@ export const adminNavigation = [
         icon: CalendarDays,
         permission: "dashboard.admin.view",
     },
+
+    // M16 — Admin Operations
+    {
+        label: "Operations",
+        routeName: "admin.operations.index",
+        icon: AlertTriangle,
+        permission: "admin.operations.view",
+    },
+    {
+        label: "Case Escalations",
+        routeName: "admin.case-escalations.index",
+        icon: ShieldAlert,
+        permission: "admin.case-escalations.manage",
+    },
+
     {
         label: "Client Intakes",
         routeName: "admin.intakes.index",
@@ -100,11 +118,13 @@ export const adminNavigation = [
         permission: "documents.admin.manage",
     },
 
+    // Finance remains isolated from ordinary Admin.
     {
         label: "Payments",
         icon: CircleDollarSign,
         disabled: true,
     },
+
     {
         label: "Users",
         routeName: "admin.users.index",
@@ -117,15 +137,27 @@ export const adminNavigation = [
         icon: KeyRound,
         permission: "roles.view",
     },
+
+    // M16 — Operational Content
+    {
+        label: "Content Snippets",
+        routeName: "admin.content-snippets.index",
+        icon: FilePenLine,
+        permission: "admin.content.manage",
+    },
+
     {
         label: "Audit Logs",
         icon: FileClock,
         disabled: true,
     },
+
+    // M16 — Master Settings
     {
         label: "Settings",
+        routeName: "admin.settings.index",
         icon: Settings,
-        disabled: true,
+        permission: "settings.view",
     },
 ];
 
@@ -241,6 +273,8 @@ export const clientNavigation = [
         icon: FileText,
         permission: "documents.client.manage",
     },
+
+    // M14 — Payments
     {
         label: "My Payments",
         routeName: "client.payments.index",
