@@ -17,26 +17,19 @@ class SupportTicketFactory extends Factory
     public function definition(): array
     {
         return [
-            'requester_id' =>
-                User::factory(),
+            'requester_id' => User::factory(),
 
-            'category' =>
-                SupportTicket::CATEGORY_GENERAL,
+            'category' => SupportTicket::CATEGORY_GENERAL,
 
-            'subject' =>
-                fake()->sentence(5),
+            'subject' => fake()->sentence(5),
 
-            'description' =>
-                fake()->paragraph(),
+            'description' => fake()->paragraph(),
 
-            'priority' =>
-                SupportTicket::PRIORITY_NORMAL,
+            'priority' => SupportTicket::PRIORITY_NORMAL,
 
-            'status' =>
-                SupportTicket::STATUS_OPEN,
+            'status' => SupportTicket::STATUS_OPEN,
 
-            'last_activity_at' =>
-                now(),
+            'last_activity_at' => now(),
         ];
     }
 
@@ -45,10 +38,8 @@ class SupportTicketFactory extends Factory
         return $this->state(
             fn (): array => [
                 'requester_id' => null,
-                'guest_name' =>
-                    fake()->name(),
-                'guest_email' =>
-                    fake()->safeEmail(),
+                'guest_name' => fake()->name(),
+                'guest_email' => fake()->safeEmail(),
             ]
         );
     }
@@ -57,8 +48,7 @@ class SupportTicketFactory extends Factory
     {
         return $this->state(
             fn (): array => [
-                'category' =>
-                    SupportTicket::CATEGORY_COMPLAINT,
+                'category' => SupportTicket::CATEGORY_COMPLAINT,
             ]
         );
     }
@@ -67,10 +57,8 @@ class SupportTicketFactory extends Factory
     {
         return $this->state(
             fn (): array => [
-                'status' =>
-                    SupportTicket::STATUS_RESOLVED,
-                'resolved_at' =>
-                    now(),
+                'status' => SupportTicket::STATUS_RESOLVED,
+                'resolved_at' => now(),
             ]
         );
     }

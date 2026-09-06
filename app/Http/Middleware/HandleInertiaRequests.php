@@ -75,7 +75,6 @@ class HandleInertiaRequests extends Middleware
                 PublicSiteDataService::class
             )->navigation(),
 
-
         ];
     }
 }

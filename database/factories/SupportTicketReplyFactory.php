@@ -18,17 +18,13 @@ class SupportTicketReplyFactory extends Factory
     public function definition(): array
     {
         return [
-            'support_ticket_id' =>
-                SupportTicket::factory(),
+            'support_ticket_id' => SupportTicket::factory(),
 
-            'user_id' =>
-                User::factory(),
+            'user_id' => User::factory(),
 
-            'body' =>
-                fake()->paragraph(),
+            'body' => fake()->paragraph(),
 
-            'is_internal' =>
-                false,
+            'is_internal' => false,
         ];
     }
 }

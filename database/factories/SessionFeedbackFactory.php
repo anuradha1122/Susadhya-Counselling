@@ -22,35 +22,27 @@ class SessionFeedbackFactory extends Factory
              * Tests/domain code should override these together
              * when relationship consistency matters.
              */
-            'appointment_id' =>
-                Appointment::factory(),
+            'appointment_id' => Appointment::factory(),
 
-            'client_profile_id' =>
-                ClientProfile::factory(),
+            'client_profile_id' => ClientProfile::factory(),
 
-            'overall_rating' =>
-                fake()->numberBetween(
-                    1,
-                    5
-                ),
+            'overall_rating' => fake()->numberBetween(
+                1,
+                5
+            ),
 
-            'technical_rating' =>
-                fake()->numberBetween(
-                    1,
-                    5
-                ),
+            'technical_rating' => fake()->numberBetween(
+                1,
+                5
+            ),
 
-            'comment' =>
-                fake()->paragraph(),
+            'comment' => fake()->paragraph(),
 
-            'would_recommend' =>
-                true,
+            'would_recommend' => true,
 
-            'consent_to_follow_up' =>
-                false,
+            'consent_to_follow_up' => false,
 
-            'submitted_at' =>
-                now(),
+            'submitted_at' => now(),
         ];
     }
 }
