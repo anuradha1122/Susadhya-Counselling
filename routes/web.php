@@ -1440,3 +1440,5 @@ require __DIR__.'/admin_operations.php';
 require __DIR__.'/notifications.php';
 require __DIR__.'/compliance.php';
 require __DIR__.'/reports.php';
+require __DIR__.'/cms.php';
+require __DIR__.'/public.php';

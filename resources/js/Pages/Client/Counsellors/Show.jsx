@@ -7,6 +7,7 @@ import {
     Link,
     useForm,
 } from "@inertiajs/react";
+import { UserRound } from "lucide-react";
 import {
     useEffect,
     useMemo,
@@ -109,6 +110,30 @@ function DetailStat({
             <p className="mt-1 text-base font-semibold text-gray-900">
                 {formatValue(value)}
             </p>
+        </div>
+    );
+}
+
+function ProfilePhoto({
+    counsellor,
+}) {
+    if (
+        counsellor.profile_photo_url
+    ) {
+        return (
+            <img
+                src={
+                    counsellor.profile_photo_url
+                }
+                alt={`${counsellor.name} profile`}
+                className="h-full w-full object-cover"
+            />
+        );
+    }
+
+    return (
+        <div className="flex h-full w-full items-center justify-center bg-indigo-50 text-indigo-500">
+            <UserRound className="h-12 w-12" />
         </div>
     );
 }
@@ -357,8 +382,10 @@ function BookingPanel({
 
             return [
                 {
-                    value: "online",
-                    label: "Online",
+                    value:
+                        "online",
+                    label:
+                        "Online",
                 },
                 {
                     value:
@@ -384,7 +411,6 @@ function BookingPanel({
             new AbortController();
 
         setLoadingSlots(true);
-
         setSlotError("");
 
         const parameters =
@@ -392,13 +418,14 @@ function BookingPanel({
                 appointment_date:
                     data.appointment_date,
 
-                mode: data.mode,
+                mode:
+                    data.mode,
             });
 
         fetch(
             `${route(
                 "client.counsellors.appointment-slots.index",
-                counsellor.id,
+                counsellor.uuid,
             )}?${parameters.toString()}`,
             {
                 headers: {
@@ -433,20 +460,22 @@ function BookingPanel({
                     );
                 },
             )
-            .catch((error) => {
-                if (
-                    error.name ===
-                    "AbortError"
-                ) {
-                    return;
-                }
+            .catch(
+                (error) => {
+                    if (
+                        error.name ===
+                        "AbortError"
+                    ) {
+                        return;
+                    }
 
-                setSlots([]);
+                    setSlots([]);
 
-                setSlotError(
-                    "Available slots could not be loaded. Please try another date or mode.",
-                );
-            })
+                    setSlotError(
+                        "Available slots could not be loaded. Please try another date or mode.",
+                    );
+                },
+            )
             .finally(() => {
                 setLoadingSlots(
                     false,
@@ -456,7 +485,7 @@ function BookingPanel({
         return () =>
             controller.abort();
     }, [
-        counsellor.id,
+        counsellor.uuid,
         data.counselling_service_id,
         data.appointment_date,
         data.mode,
@@ -595,7 +624,6 @@ function BookingPanel({
                 onSubmit={submit}
                 className="space-y-5"
             >
-                {/* Service */}
                 <div>
                     <label
                         htmlFor="counselling_service_id"
@@ -666,14 +694,13 @@ function BookingPanel({
                             currently no
                             active counselling
                             services that match
-                            this counsellor's
+                            this counsellor&apos;s
                             published
                             availability.
                         </div>
                     )}
                 </div>
 
-                {/* Selected service */}
                 {selectedService && (
                     <div className="rounded-lg border border-indigo-100 bg-indigo-50 p-4">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -717,7 +744,6 @@ function BookingPanel({
                     </div>
                 )}
 
-                {/* Date and mode */}
                 <div className="grid gap-4 md:grid-cols-2">
                     <div>
                         <label
@@ -731,7 +757,9 @@ function BookingPanel({
                         <input
                             id="appointment_date"
                             type="date"
-                            min={todayForInput()}
+                            min={
+                                todayForInput()
+                            }
                             value={
                                 data.appointment_date
                             }
@@ -803,11 +831,11 @@ function BookingPanel({
                     </div>
                 </div>
 
-                {/* Slots */}
                 <div>
                     <div className="flex items-center justify-between gap-4">
                         <p className="text-sm font-medium text-gray-700">
-                            Available slots
+                            Available
+                            slots
                         </p>
 
                         {loadingSlots && (
@@ -824,7 +852,8 @@ function BookingPanel({
                             counselling
                             service before
                             choosing an
-                            appointment slot.
+                            appointment
+                            slot.
                         </div>
                     )}
 
@@ -921,7 +950,6 @@ function BookingPanel({
                     />
                 </div>
 
-                {/* Notes */}
                 <div>
                     <label
                         htmlFor="client_notes"
@@ -1025,44 +1053,68 @@ export default function Show({
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="bg-gradient-to-r from-indigo-50 to-white px-6 py-8">
                             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                                <div>
-                                    <div className="flex flex-wrap items-center gap-3">
-                                        <h1 className="text-2xl font-bold text-gray-900">
-                                            {
-                                                counsellor.name
+                                <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
+                                    <div className="h-32 w-32 shrink-0 overflow-hidden rounded-2xl border-4 border-white bg-gray-100 shadow-md">
+                                        <ProfilePhoto
+                                            counsellor={
+                                                counsellor
                                             }
-                                        </h1>
-
-                                        <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-                                            Rating:{" "}
-                                            {
-                                                counsellor.rating_placeholder
-                                            }
-                                        </span>
+                                        />
                                     </div>
 
-                                    <p className="mt-2 text-base text-gray-600">
-                                        {formatValue(
-                                            counsellor.professional_title,
-                                        )}
-                                    </p>
+                                    <div>
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <h1 className="text-2xl font-bold text-gray-900">
+                                                {
+                                                    counsellor.name
+                                                }
+                                            </h1>
 
-                                    <p className="mt-2 text-sm text-gray-500">
-                                        {formatValue(
-                                            counsellor.city,
+                                            {counsellor.rating_placeholder && (
+                                                <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                                                    Rating:{" "}
+                                                    {
+                                                        counsellor.rating_placeholder
+                                                    }
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <p className="mt-2 text-base font-medium text-indigo-600">
+                                            {formatValue(
+                                                counsellor.professional_title,
+                                            )}
+                                        </p>
+
+                                        {counsellor.city && (
+                                            <p className="mt-2 text-sm text-gray-500">
+                                                {formatValue(
+                                                    counsellor.city,
+                                                )}
+                                            </p>
                                         )}
-                                    </p>
+
+                                        {counsellor.registration_number && (
+                                            <p className="mt-2 text-xs text-gray-500">
+                                                Registration:{" "}
+                                                <span className="font-medium text-gray-700">
+                                                    {
+                                                        counsellor.registration_number
+                                                    }
+                                                </span>
+                                            </p>
+                                        )}
+                                    </div>
                                 </div>
 
-                                <div className="rounded-lg border border-indigo-100 bg-white px-4 py-3 text-sm text-indigo-700 shadow-sm">
+                                <div className="max-w-sm rounded-lg border border-indigo-100 bg-white px-4 py-3 text-sm leading-6 text-indigo-700 shadow-sm">
                                     Booking
                                     requests
                                     start as
-                                    pending
-                                    until the
+                                    pending until
+                                    the
                                     counsellor
-                                    confirms
-                                    them.
+                                    confirms them.
                                 </div>
                             </div>
                         </div>
@@ -1097,7 +1149,6 @@ export default function Show({
                     </div>
 
                     <div className="grid gap-6 lg:grid-cols-3">
-                        {/* Main column */}
                         <div className="space-y-6 lg:col-span-2">
                             <BookingPanel
                                 counsellor={
@@ -1122,10 +1173,8 @@ export default function Show({
                                     <p className="text-sm text-gray-500">
                                         No
                                         biography
-                                        has
-                                        been
-                                        added
-                                        yet.
+                                        has been
+                                        added yet.
                                     </p>
                                 )}
                             </SectionCard>
@@ -1142,7 +1191,6 @@ export default function Show({
                             </SectionCard>
                         </div>
 
-                        {/* Side column */}
                         <div className="space-y-6">
                             <SectionCard title="Specializations">
                                 {counsellor
@@ -1244,6 +1292,14 @@ export default function Show({
                                                             qualification.institution,
                                                         )}
                                                     </p>
+
+                                                    {qualification.field_of_study && (
+                                                        <p className="mt-1 text-sm text-gray-500">
+                                                            {formatValue(
+                                                                qualification.field_of_study,
+                                                            )}
+                                                        </p>
+                                                    )}
 
                                                     {qualification.year_completed && (
                                                         <p className="mt-1 text-xs text-gray-500">

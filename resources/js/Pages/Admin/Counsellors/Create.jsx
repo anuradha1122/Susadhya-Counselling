@@ -1,10 +1,26 @@
 import AdminLayout from "@/Layouts/AdminLayout";
 import CounsellorForm from "@/Pages/Admin/Counsellors/Partials/CounsellorForm";
-import { Head, useForm } from "@inertiajs/react";
+import CounsellorProfilePhotoCard from "@/Pages/Admin/Counsellors/Partials/CounsellorProfilePhotoCard";
+import {
+    Head,
+    useForm,
+} from "@inertiajs/react";
 
-export default function Create({ users, specializations, languages }) {
-    const { data, setData, post, processing, errors } = useForm({
+export default function Create({
+    users,
+    specializations,
+    languages,
+}) {
+    const {
+        data,
+        setData,
+        post,
+        processing,
+        errors,
+    } = useForm({
         user_id: "",
+        profile_photo: null,
+        remove_profile_photo: false,
         registration_number: "",
         professional_title: "",
         nic: "",
@@ -20,17 +36,31 @@ export default function Create({ users, specializations, languages }) {
         qualifications: [],
     });
 
-    const submit = (event) => {
+    const selectedUser =
+        users.find(
+            (user) =>
+                String(
+                    user.id,
+                )
+                === String(
+                    data.user_id,
+                ),
+        );
+
+    const submit = (
+        event,
+    ) => {
         event.preventDefault();
 
-        post(route("admin.counsellors.store"), {
-            preserveScroll: true,
-            transform: (formData) => ({
-                ...formData,
-                user_id: Number(formData.user_id),
-                years_of_experience: Number(formData.years_of_experience),
-            }),
-        });
+        post(
+            route(
+                "admin.counsellors.store",
+            ),
+            {
+                preserveScroll: true,
+                forceFormData: true,
+            },
+        );
     };
 
     return (
@@ -40,25 +70,58 @@ export default function Create({ users, specializations, languages }) {
             <div className="space-y-6">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">
-                        Create counsellor
+                        Create
+                        counsellor
                     </h1>
 
                     <p className="mt-1 text-sm text-slate-500">
-                        Create and associate a counsellor profile with an
-                        existing user account.
+                        Create and
+                        associate a
+                        counsellor
+                        profile with
+                        an existing
+                        user account.
                     </p>
                 </div>
 
+                <CounsellorProfilePhotoCard
+                    data={data}
+                    setData={
+                        setData
+                    }
+                    errors={
+                        errors
+                    }
+                    currentPhotoUrl={
+                        selectedUser?.profile_photo_url
+                        ?? null
+                    }
+                />
+
                 <CounsellorForm
                     data={data}
-                    setData={setData}
-                    errors={errors}
-                    processing={processing}
-                    users={users}
-                    specializations={specializations}
-                    languages={languages}
+                    setData={
+                        setData
+                    }
+                    errors={
+                        errors
+                    }
+                    processing={
+                        processing
+                    }
+                    users={
+                        users
+                    }
+                    specializations={
+                        specializations
+                    }
+                    languages={
+                        languages
+                    }
                     submitLabel="Create counsellor"
-                    onSubmit={submit}
+                    onSubmit={
+                        submit
+                    }
                 />
             </div>
         </AdminLayout>

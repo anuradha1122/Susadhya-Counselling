@@ -1,0 +1,98 @@
+:root {
+    --susadhya-navy: #1a365d;
+    --susadhya-navy-dark: #102a46;
+    --susadhya-teal: #2a9d8f;
+    --susadhya-teal-dark: #207d73;
+    --susadhya-green: #7fb069;
+    --susadhya-blue-soft: #e6f2fa;
+    --susadhya-blue-pale: #f1f9fc;
+    --susadhya-cream: #f7f9f4;
+    --susadhya-white: #ffffff;
+    --susadhya-text: #475569;
+    --susadhya-border: #dbe4e8;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    background: var(--susadhya-cream);
+}
+
+.susadhya-public {
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: var(--susadhya-cream);
+    color: var(--susadhya-text);
+    font-family:
+        "Poppins",
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+.susadhya-heading {
+    font-family:
+        "Playfair Display",
+        Georgia,
+        "Times New Roman",
+        serif;
+    color: var(--susadhya-navy);
+    letter-spacing: -0.025em;
+}
+
+.susadhya-public a,
+.susadhya-public button {
+    transition:
+        color 180ms ease,
+        background-color 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease,
+        opacity 180ms ease,
+        transform 180ms ease;
+}
+
+.susadhya-public img {
+    display: block;
+}
+
+.susadhya-public ::selection {
+    background: rgba(42, 157, 143, 0.22);
+    color: var(--susadhya-navy);
+}
+
+.susadhya-container {
+    width: min(100% - 2rem, 1280px);
+    margin-inline: auto;
+}
+
+.susadhya-section-label {
+    color: var(--susadhya-teal);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.susadhya-card-shadow {
+    box-shadow:
+        0 1px 2px rgb(15 23 42 / 0.03),
+        0 12px 40px rgb(26 54 93 / 0.07);
+}
+
+.susadhya-soft-shadow {
+    box-shadow:
+        0 12px 40px rgb(26 54 93 / 0.08);
+}
+
+@media (max-width: 640px) {
+    .susadhya-container {
+        width: min(100% - 1.5rem, 1280px);
+    }
+}

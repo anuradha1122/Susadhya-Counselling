@@ -21,6 +21,9 @@ class DatabaseSeeder extends Seeder
             ReportPermissionSeeder::class,
             CompliancePermissionSeeder::class,
             RetentionPolicySeeder::class,
+            CmsPermissionSeeder::class,
+            CmsContentSeeder::class,
+            FixedCmsPageSeeder::class,
         ]);
     }
 }

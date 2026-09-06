@@ -9,7 +9,9 @@ class StoreCounsellorRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->can('counsellors.create');
+        return $this->user()->can(
+            'counsellors.create'
+        );
     }
 
     public function rules(): array
@@ -19,32 +21,55 @@ class StoreCounsellorRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists('users', 'id')->where(
-                    fn ($query) => $query->where('is_active', true)
+                    fn ($query) => $query
+                        ->where('is_active', true)
                 ),
-                Rule::unique('counsellor_profiles', 'user_id'),
+                Rule::unique(
+                    'counsellor_profiles',
+                    'user_id'
+                ),
             ],
+
+            'profile_photo' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120',
+                'dimensions:max_width=4000,max_height=4000',
+            ],
+
             'registration_number' => [
                 'required',
                 'string',
                 'max:50',
-                Rule::unique('counsellor_profiles', 'registration_number'),
+                Rule::unique(
+                    'counsellor_profiles',
+                    'registration_number'
+                ),
             ],
+
             'professional_title' => [
                 'nullable',
                 'string',
                 'max:150',
             ],
+
             'nic' => [
                 'nullable',
                 'string',
                 'max:20',
-                Rule::unique('counsellor_profiles', 'nic'),
+                Rule::unique(
+                    'counsellor_profiles',
+                    'nic'
+                ),
             ],
+
             'date_of_birth' => [
                 'nullable',
                 'date',
                 'before:today',
             ],
+
             'gender' => [
                 'nullable',
                 Rule::in([
@@ -54,54 +79,81 @@ class StoreCounsellorRequest extends FormRequest
                     'prefer_not_to_say',
                 ]),
             ],
+
             'years_of_experience' => [
                 'required',
                 'integer',
                 'min:0',
                 'max:80',
             ],
+
             'biography' => [
                 'nullable',
                 'string',
                 'max:5000',
             ],
+
             'address' => [
                 'nullable',
                 'string',
                 'max:1000',
             ],
+
             'city' => [
                 'nullable',
                 'string',
                 'max:150',
             ],
+
             'status' => [
                 'required',
-                Rule::in(['active', 'inactive']),
+                Rule::in([
+                    'active',
+                    'inactive',
+                ]),
             ],
+
             'specialization_ids' => [
                 'nullable',
                 'array',
             ],
+
             'specialization_ids.*' => [
                 'integer',
                 'distinct',
-                Rule::exists('specializations', 'id')->where(
-                    fn ($query) => $query->where('is_active', true)
+                Rule::exists(
+                    'specializations',
+                    'id'
+                )->where(
+                    fn ($query) => $query
+                        ->where(
+                            'is_active',
+                            true
+                        )
                 ),
             ],
+
             'languages' => [
                 'nullable',
                 'array',
             ],
+
             'languages.*.language_id' => [
                 'required',
                 'integer',
                 'distinct',
-                Rule::exists('languages', 'id')->where(
-                    fn ($query) => $query->where('is_active', true)
+                Rule::exists(
+                    'languages',
+                    'id'
+                )->where(
+                    fn ($query) => $query
+                        ->where(
+                            'is_active',
+                            true
+                        )
                 ),
             ],
+
             'languages.*.proficiency' => [
                 'required',
                 Rule::in([
@@ -111,31 +163,37 @@ class StoreCounsellorRequest extends FormRequest
                     'native',
                 ]),
             ],
+
             'qualifications' => [
                 'nullable',
                 'array',
             ],
+
             'qualifications.*.qualification' => [
                 'required',
                 'string',
                 'max:255',
             ],
+
             'qualifications.*.institution' => [
                 'required',
                 'string',
                 'max:255',
             ],
+
             'qualifications.*.field_of_study' => [
                 'nullable',
                 'string',
                 'max:255',
             ],
+
             'qualifications.*.year_completed' => [
                 'nullable',
                 'integer',
                 'min:1900',
                 'max:'.now()->year,
             ],
+
             'qualifications.*.certificate_number' => [
                 'nullable',
                 'string',
@@ -148,7 +206,17 @@ class StoreCounsellorRequest extends FormRequest
     {
         return [
             'user_id.unique' => 'The selected user already has a counsellor profile.',
+
+            'profile_photo.image' => 'The profile photo must be a valid image.',
+
+            'profile_photo.mimes' => 'The profile photo must be a JPG, JPEG, PNG or WebP image.',
+
+            'profile_photo.max' => 'The profile photo may not exceed 5 MB.',
+
+            'profile_photo.dimensions' => 'The profile photo may not exceed 4000 × 4000 pixels.',
+
             'specialization_ids.*.distinct' => 'A specialization cannot be selected more than once.',
+
             'languages.*.language_id.distinct' => 'A language cannot be selected more than once.',
         ];
     }

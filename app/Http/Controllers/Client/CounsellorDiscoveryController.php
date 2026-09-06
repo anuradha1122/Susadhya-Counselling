@@ -83,7 +83,7 @@ class CounsellorDiscoveryController extends Controller
         $counsellors =
             CounsellorProfile::query()
                 ->with([
-                    'user:id,name,email,phone,is_active',
+                    'user:id,name,email,phone,is_active,profile_photo_path',
 
                     'specializations:id,name',
 
@@ -451,7 +451,7 @@ class CounsellorDiscoveryController extends Controller
         );
 
         $counsellor->load([
-            'user:id,name,email,phone,is_active',
+            'user:id,name,email,phone,is_active,profile_photo_path',
 
             'specializations:id,name',
 
@@ -586,42 +586,37 @@ class CounsellorDiscoveryController extends Controller
         return [
             'id' => $counsellor->id,
 
-            'name' => $counsellor
-                ->user
-                ?->name
+            'uuid' => $counsellor->uuid,
+
+            'name' => $counsellor->user?->name
                 ?? "Counsellor #{$counsellor->id}",
 
-            'professional_title' => $counsellor
-                ->professional_title,
+            'profile_photo_url' => $counsellor->user
+                ?->profile_photo_url,
 
-            'years_of_experience' => $counsellor
-                ->years_of_experience,
+            'professional_title' => $counsellor->professional_title,
 
-            'biography' => $counsellor
-                ->biography,
+            'years_of_experience' => $counsellor->years_of_experience,
 
-            'city' => $counsellor
-                ->city,
+            'biography' => $counsellor->biography,
 
-            'status' => $counsellor
-                ->status,
+            'city' => $counsellor->city,
+
+            'status' => $counsellor->status,
 
             'rating_placeholder' => 'New',
 
-            'specializations' => $this
-                ->specializationPayload(
-                    $counsellor
-                ),
+            'specializations' => $this->specializationPayload(
+                $counsellor
+            ),
 
-            'languages' => $this
-                ->languagePayload(
-                    $counsellor
-                ),
+            'languages' => $this->languagePayload(
+                $counsellor
+            ),
 
-            'availability_summary' => $this
-                ->availabilitySummaryPayload(
-                    $counsellor
-                ),
+            'availability_summary' => $this->availabilitySummaryPayload(
+                $counsellor
+            ),
         ];
     }
 
@@ -631,54 +626,43 @@ class CounsellorDiscoveryController extends Controller
         return [
             'id' => $counsellor->id,
 
-            'name' => $counsellor
-                ->user
-                ?->name
+            'uuid' => $counsellor->uuid,
+
+            'name' => $counsellor->user?->name
                 ?? "Counsellor #{$counsellor->id}",
 
-            'email' => $counsellor
-                ->user
-                ?->email,
+            'profile_photo_url' => $counsellor->user
+                ?->profile_photo_url,
 
-            'phone' => $counsellor
-                ->user
-                ?->phone,
+            'email' => $counsellor->user?->email,
 
-            'registration_number' => $counsellor
-                ->registration_number,
+            'phone' => $counsellor->user?->phone,
 
-            'professional_title' => $counsellor
-                ->professional_title,
+            'registration_number' => $counsellor->registration_number,
 
-            'gender' => $counsellor
-                ->gender,
+            'professional_title' => $counsellor->professional_title,
 
-            'years_of_experience' => $counsellor
-                ->years_of_experience,
+            'gender' => $counsellor->gender,
 
-            'biography' => $counsellor
-                ->biography,
+            'years_of_experience' => $counsellor->years_of_experience,
 
-            'address' => $counsellor
-                ->address,
+            'biography' => $counsellor->biography,
 
-            'city' => $counsellor
-                ->city,
+            'address' => $counsellor->address,
 
-            'status' => $counsellor
-                ->status,
+            'city' => $counsellor->city,
+
+            'status' => $counsellor->status,
 
             'rating_placeholder' => 'New',
 
-            'specializations' => $this
-                ->specializationPayload(
-                    $counsellor
-                ),
+            'specializations' => $this->specializationPayload(
+                $counsellor
+            ),
 
-            'languages' => $this
-                ->languagePayload(
-                    $counsellor
-                ),
+            'languages' => $this->languagePayload(
+                $counsellor
+            ),
 
             'qualifications' => $counsellor
                 ->qualifications
@@ -707,6 +691,16 @@ class CounsellorDiscoveryController extends Controller
                                     'institution',
                                     'institute',
                                     'awarding_body',
+                                ]
+                            ),
+
+                        'field_of_study' => $this
+                            ->firstAvailableAttribute(
+                                $qualification,
+                                [
+                                    'field_of_study',
+                                    'field',
+                                    'study_area',
                                 ]
                             ),
 

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class CounsellorProfile extends Model
 {
@@ -29,6 +30,21 @@ class CounsellorProfile extends Model
         'archived_at',
         'archived_by',
     ];
+
+    protected static function booted(): void
+    {
+        static::creating(
+            function (CounsellorProfile $profile): void {
+                $profile->uuid ??=
+                    (string) Str::uuid7();
+            }
+        );
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'uuid';
+    }
 
     protected function casts(): array
     {

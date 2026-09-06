@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\PublicSite\PublicSiteDataService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -65,6 +66,14 @@ class HandleInertiaRequests extends Middleware
                     ->session()
                     ->get('error'),
             ],
+
+            'publicSite' => fn () => app(
+                PublicSiteDataService::class
+            )->settings(),
+
+            'publicSiteNavigation' => fn () => app(
+                PublicSiteDataService::class
+            )->navigation(),
         ];
     }
 }

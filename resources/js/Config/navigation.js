@@ -17,6 +17,7 @@ import {
     HeartHandshake,
     KeyRound,
     LayoutDashboard,
+    PanelsTopLeft,
     ReceiptText,
     RotateCcw,
     Search,
@@ -175,6 +176,13 @@ export const adminNavigation = [
         routeName: "admin.settings.index",
         icon: Settings,
         permission: "settings.view",
+    },
+
+    {
+        label: "Website CMS",
+        routeName: "admin.cms.dashboard",
+        icon: PanelsTopLeft,
+        permission: "cms.view",
     },
 ];
 

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
@@ -50,13 +52,42 @@ class User extends Authenticatable implements MustVerifyEmail
         return collect(explode(' ', trim($this->name)))
             ->filter()
             ->take(2)
-            ->map(fn (string $part) => mb_strtoupper(mb_substr($part, 0, 1)))
+            ->map(
+                fn (string $part) => mb_strtoupper(
+                    mb_substr($part, 0, 1)
+                )
+            )
             ->implode('');
     }
 
     public function getPrimaryRoleAttribute(): ?string
     {
         return $this->getRoleNames()->first();
+    }
+
+    public function getProfilePhotoUrlAttribute(): ?string
+    {
+        $path = $this->profile_photo_path;
+
+        if (blank($path)) {
+            return null;
+        }
+
+        if (
+            Str::startsWith(
+                $path,
+                [
+                    'http://',
+                    'https://',
+                    '/',
+                ]
+            )
+        ) {
+            return $path;
+        }
+
+        return Storage::disk('public')
+            ->url($path);
     }
 
     public function isSuperAdmin(): bool
@@ -77,18 +108,17 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasRole('counsellor');
     }
 
-    public function isClient(): bool
-    {
-        return $this->hasRole('client');
-    }
-
     public function counsellorProfile(): HasOne
     {
-        return $this->hasOne(CounsellorProfile::class);
+        return $this->hasOne(
+            CounsellorProfile::class
+        );
     }
 
     public function clientProfile(): HasOne
     {
-        return $this->hasOne(ClientProfile::class);
+        return $this->hasOne(
+            ClientProfile::class
+        );
     }
 }

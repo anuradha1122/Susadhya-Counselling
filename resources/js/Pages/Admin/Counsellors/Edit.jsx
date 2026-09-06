@@ -1,6 +1,10 @@
 import AdminLayout from "@/Layouts/AdminLayout";
 import CounsellorForm from "@/Pages/Admin/Counsellors/Partials/CounsellorForm";
-import { Head, useForm } from "@inertiajs/react";
+import CounsellorProfilePhotoCard from "@/Pages/Admin/Counsellors/Partials/CounsellorProfilePhotoCard";
+import {
+    Head,
+    useForm,
+} from "@inertiajs/react";
 
 export default function Edit({
     counsellor,
@@ -8,42 +12,170 @@ export default function Edit({
     specializations,
     languages,
 }) {
-    const { data, setData, put, processing, errors } = useForm({
-        user_id: String(counsellor.user_id ?? ""),
-        registration_number: counsellor.registration_number ?? "",
-        professional_title: counsellor.professional_title ?? "",
-        nic: counsellor.nic ?? "",
-        date_of_birth: counsellor.date_of_birth ?? "",
-        gender: counsellor.gender ?? "",
-        years_of_experience: counsellor.years_of_experience ?? 0,
-        biography: counsellor.biography ?? "",
-        address: counsellor.address ?? "",
-        city: counsellor.city ?? "",
-        status: counsellor.status ?? "active",
-        specialization_ids: counsellor.specialization_ids ?? [],
-        languages: counsellor.languages ?? [],
-        qualifications: (counsellor.qualifications ?? []).map(
-            (qualification) => ({
-                qualification: qualification.qualification ?? "",
-                institution: qualification.institution ?? "",
-                field_of_study: qualification.field_of_study ?? "",
-                year_completed: qualification.year_completed ?? "",
-                certificate_number: qualification.certificate_number ?? "",
-            }),
+    const {
+        data,
+        setData,
+        post,
+        processing,
+        errors,
+        transform,
+    } = useForm({
+        user_id: String(
+            counsellor.user_id ?? "",
         ),
+
+        profile_photo: null,
+
+        remove_profile_photo: false,
+
+        registration_number:
+            counsellor.registration_number ?? "",
+
+        professional_title:
+            counsellor.professional_title ?? "",
+
+        nic:
+            counsellor.nic ?? "",
+
+        date_of_birth:
+            counsellor.date_of_birth ?? "",
+
+        gender:
+            counsellor.gender ?? "",
+
+        years_of_experience:
+            counsellor.years_of_experience ?? 0,
+
+        biography:
+            counsellor.biography ?? "",
+
+        address:
+            counsellor.address ?? "",
+
+        city:
+            counsellor.city ?? "",
+
+        status:
+            counsellor.status ?? "active",
+
+        specialization_ids:
+            counsellor.specializations?.map(
+                (specialization) =>
+                    specialization.id,
+            ) ?? [],
+
+        languages:
+            counsellor.languages?.map(
+                (language) => ({
+                    language_id:
+                        language.id,
+
+                    proficiency:
+                        language.pivot
+                            ?.proficiency
+                        ?? "conversational",
+                }),
+            ) ?? [],
+
+        qualifications:
+            (
+                counsellor.qualifications
+                ?? []
+            ).map(
+                (qualification) => ({
+                    qualification:
+                        qualification.qualification
+                        ?? "",
+
+                    institution:
+                        qualification.institution
+                        ?? "",
+
+                    field_of_study:
+                        qualification.field_of_study
+                        ?? "",
+
+                    year_completed:
+                        qualification.year_completed
+                        ?? "",
+
+                    certificate_number:
+                        qualification.certificate_number
+                        ?? "",
+                }),
+            ),
     });
 
-    const submit = (event) => {
+    const selectedUser =
+        users.find(
+            (user) =>
+                String(user.id)
+                === String(
+                    data.user_id,
+                ),
+        );
+
+    const submit = (
+        event,
+    ) => {
         event.preventDefault();
 
-        put(route("admin.counsellors.update", counsellor.id), {
-            preserveScroll: true,
-            transform: (formData) => ({
+        transform(
+            (formData) => ({
                 ...formData,
-                user_id: Number(formData.user_id),
-                years_of_experience: Number(formData.years_of_experience),
+
+                _method: "PUT",
+
+                user_id: Number(
+                    formData.user_id,
+                ),
+
+                years_of_experience:
+                    Number(
+                        formData.years_of_experience,
+                    ),
+
+                specialization_ids:
+                    (
+                        formData.specialization_ids
+                        ?? []
+                    ).map(
+                        (id) =>
+                            Number(id),
+                    ),
+
+                languages:
+                    (
+                        formData.languages
+                        ?? []
+                    ).map(
+                        (language) => ({
+                            ...language,
+
+                            language_id:
+                                Number(
+                                    language.language_id,
+                                ),
+                        }),
+                    ),
+
+                remove_profile_photo:
+                    Boolean(
+                        formData.remove_profile_photo,
+                    ),
             }),
-        });
+        );
+
+        post(
+            route(
+                "admin.counsellors.update",
+                counsellor.uuid,
+            ),
+            {
+                preserveScroll: true,
+                forceFormData: true,
+            },
+        );
     };
 
     return (
@@ -57,20 +189,54 @@ export default function Edit({
                     </h1>
 
                     <p className="mt-1 text-sm text-slate-500">
-                        Update the profile for {counsellor.user?.name}.
+                        Update the profile for{" "}
+                        {
+                            counsellor
+                                .user
+                                ?.name
+                        }
+                        .
                     </p>
                 </div>
 
+                <CounsellorProfilePhotoCard
+                    data={data}
+                    setData={
+                        setData
+                    }
+                    errors={
+                        errors
+                    }
+                    currentPhotoUrl={
+                        selectedUser
+                            ?.profile_photo_url
+                        ?? counsellor
+                            .user
+                            ?.profile_photo_url
+                        ?? null
+                    }
+                />
+
                 <CounsellorForm
                     data={data}
-                    setData={setData}
+                    setData={
+                        setData
+                    }
                     errors={errors}
-                    processing={processing}
+                    processing={
+                        processing
+                    }
                     users={users}
-                    specializations={specializations}
-                    languages={languages}
+                    specializations={
+                        specializations
+                    }
+                    languages={
+                        languages
+                    }
                     submitLabel="Save changes"
-                    onSubmit={submit}
+                    onSubmit={
+                        submit
+                    }
                 />
             </div>
         </AdminLayout>
