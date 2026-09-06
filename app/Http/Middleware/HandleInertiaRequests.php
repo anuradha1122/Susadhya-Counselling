@@ -74,6 +74,8 @@ class HandleInertiaRequests extends Middleware
             'publicSiteNavigation' => fn () => app(
                 PublicSiteDataService::class
             )->navigation(),
+
+
         ];
     }
 }

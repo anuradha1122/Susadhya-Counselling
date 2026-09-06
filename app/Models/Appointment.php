@@ -317,6 +317,13 @@ class Appointment extends Model
         );
     }
 
+    public function sessionFeedback(): HasOne
+    {
+        return $this->hasOne(
+            SessionFeedback::class
+        );
+    }
+
     protected static function booted(): void
     {
         static::creating(

@@ -15,6 +15,7 @@ import {
     FilePenLine,
     FileText,
     HeartHandshake,
+    LifeBuoy,
     KeyRound,
     LayoutDashboard,
     PanelsTopLeft,
@@ -80,6 +81,12 @@ export const adminNavigation = [
         routeName: "admin.operations.index",
         icon: AlertTriangle,
         permission: "admin.operations.view",
+    },
+    {
+        label: "Support",
+        routeName: "admin.support.index",
+        icon: LifeBuoy,
+        permission: "support.admin.view",
     },
     {
         label: "Case Escalations",
@@ -305,6 +312,12 @@ export const clientNavigation = [
         routeName: "client.payments.index",
         icon: ReceiptText,
         permission: "payments.client.manage",
+    },
+    {
+        label: "Support",
+        routeName: "client.support.index",
+        icon: LifeBuoy,
+        permission: "support.client.manage",
     },
     {
         label: "Privacy Requests",

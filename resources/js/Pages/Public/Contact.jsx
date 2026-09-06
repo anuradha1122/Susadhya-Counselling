@@ -3,6 +3,7 @@ import {
 } from "@/Components/Public/FixedSections";
 import PublicSeo from "@/Components/Public/PublicSeo";
 import PublicLayout from "@/Layouts/PublicLayout";
+import SupportContactForm from "@/Components/Public/SupportContactForm";
 import {
     Clock,
     Mail,
@@ -235,6 +236,12 @@ export default function Contact({
                             </div>
                         )}
                     </div>
+                </div>
+            </section>
+
+            <section className="bg-[#F7F9F4] px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+                <div className="mx-auto max-w-5xl">
+                    <SupportContactForm />
                 </div>
             </section>
 
