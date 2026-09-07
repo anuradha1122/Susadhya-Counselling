@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             CmsContentSeeder::class,
             FixedCmsPageSeeder::class,
             SupportPermissionSeeder::class,
+            AdvancedProductPermissionSeeder::class,
         ]);
     }
 }

@@ -29,6 +29,9 @@ import {
     Tags,
     UserRoundCog,
     Users,
+    Sparkles,
+    UsersRound,
+    PackageCheck,
 } from "lucide-react";
 
 export const adminNavigation = [
@@ -140,6 +143,14 @@ export const adminNavigation = [
         label: "Payments",
         icon: CircleDollarSign,
         disabled: true,
+    },
+
+
+    {
+        label: 'Advanced',
+        routeName: 'admin.advanced-products.index',
+        icon: Sparkles,
+        permission: 'advanced-products.view',
     },
 
     {
@@ -312,6 +323,18 @@ export const clientNavigation = [
         routeName: "client.payments.index",
         icon: ReceiptText,
         permission: "payments.client.manage",
+    },
+    {
+        label: 'Groups',
+        routeName: 'client.advanced-products.groups.index',
+        icon: UsersRound,
+        permission: 'group-counselling.client.view',
+    },
+    {
+        label: 'Packages',
+        routeName: 'client.advanced-products.packages.index',
+        icon: PackageCheck,
+        permission: 'packages.client.view',
     },
     {
         label: "Support",

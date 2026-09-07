@@ -1443,3 +1443,4 @@ require __DIR__.'/reports.php';
 require __DIR__.'/cms.php';
 require __DIR__.'/public.php';
 require __DIR__.'/support.php';
+require __DIR__.'/advanced-product.php';
